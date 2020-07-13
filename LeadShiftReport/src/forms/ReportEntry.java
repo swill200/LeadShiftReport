@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -24,11 +25,22 @@ public class ReportEntry extends Shell {
 	private Text text, text1, text2, text3, text4, text5, text6, text7, text8, text9;
 	private Text textTakedowns, textIdRequests, textEquipment, textMonitoring, txtName, txtDate, txtShift,
 			txtOncomingLead;
+
+	protected boolean eaWaItxComplete,	eaWaItxPlayoutComplete, channelLaunchComplete, weatherComplete,	interactiveComplete,
+	maintenanceComplete, turnerComplete, preliminaryKciComplete, skdlComplete, mcSwitchesComplete;
+
 	protected String shift;
 	protected String[] empArray;
-
+	protected boolean[] buttonValues = new boolean[10];
+	
 	public ReportEntry(Display display) {
 		super(display, SWT.SHELL_TRIM);
+		addShellListener(new ShellAdapter() {
+			@Override
+			public void shellClosed(ShellEvent e) {
+				
+			}
+		});
 		GridLayout gridLayout = new GridLayout(1, false);
 		gridLayout.marginBottom = 25;
 		gridLayout.marginRight = 25;
@@ -44,7 +56,6 @@ public class ReportEntry extends Shell {
 		scrldfrmCheyenneTocLead.setLayoutData(gd_scrldfrmCheyenneTocLead);
 		formToolkit.paintBordersFor(scrldfrmCheyenneTocLead);
 		scrldfrmCheyenneTocLead.setText("Cheyenne TOC Lead Tech Shift Report");
-
 		Composite composite = formToolkit.createComposite(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
 //		composite.setBackground(display.getSystemColor(SWT.COLOR_GRAY));
 		composite.setBounds(10, 10, 697, 564);
@@ -62,12 +73,20 @@ public class ReportEntry extends Shell {
 		btnEmployee.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				buttonValues[0] = btnEmployee.getSelection();
+//				System.out.println(buttonValues[0] + " Button 0");
 			}
 		});
 		formToolkit.adapt(btnEmployee, true, true);
 		btnEmployee.setText("Employee_0");
-
 		Button btnEmployee_1 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_1.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[1] = btnEmployee_1.getSelection();
+//				System.out.println(buttonValues[1] + " Button 1");
+			}
+		});
 		btnEmployee_1.setBounds(10, 40, 150, 16);
 		formToolkit.adapt(btnEmployee_1, true, true);
 		btnEmployee_1.setText("Employee_1");
@@ -76,6 +95,8 @@ public class ReportEntry extends Shell {
 		btnEmployee_2.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				buttonValues[2] = btnEmployee_2.getSelection();
+//				System.out.println(buttonValues[2] + " Button 2");
 			}
 		});
 		btnEmployee_2.setBounds(10, 60, 150, 16);
@@ -83,77 +104,177 @@ public class ReportEntry extends Shell {
 		btnEmployee_2.setText("Employee_2");
 
 		Button btnEmployee_3 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_3.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[3] = btnEmployee_3.getSelection();
+//				System.out.println(buttonValues[3] + " Button 3");
+			}
+		});
 		btnEmployee_3.setBounds(10, 80, 150, 16);
 		formToolkit.adapt(btnEmployee_3, true, true);
 		btnEmployee_3.setText("Employee_3");
 
 		Button btnEmployee_4 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_4.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[4] = btnEmployee_4.getSelection();
+//				System.out.println(buttonValues[4] + " Button 4");
+			}
+		});
 		btnEmployee_4.setBounds(10, 100, 150, 16);
 		formToolkit.adapt(btnEmployee_4, true, true);
 		btnEmployee_4.setText("Employee_4");
 
 		Button btnEmployee_5 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_5.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[5] = btnEmployee_5.getSelection();
+//				System.out.println(buttonValues[5] + " Button 5");
+			}
+		});
 		btnEmployee_5.setBounds(10, 120, 150, 16);
 		formToolkit.adapt(btnEmployee_5, true, true);
 		btnEmployee_5.setText("Employee_5");
 
 		Button btnEmployee_6 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_6.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[6] = btnEmployee_6.getSelection();
+//				System.out.println(buttonValues[6] + " Button 6");
+			}
+		});
 		btnEmployee_6.setBounds(10, 140, 150, 16);
 		formToolkit.adapt(btnEmployee_6, true, true);
 		btnEmployee_6.setText("Employee_6");
 
 		Button btnEmployee_7 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_7.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[7] = btnEmployee_7.getSelection();
+//				System.out.println(buttonValues[7] + " Button 7");
+			}
+		});
 		btnEmployee_7.setBounds(10, 160, 150, 16);
 		formToolkit.adapt(btnEmployee_7, true, true);
 		btnEmployee_7.setText("Employee_7");
 
 		Button btnEmployee_8 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_8.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[8] = btnEmployee_8.getSelection();
+//				System.out.println(buttonValues[8] + " Button 8");
+			}
+		});
 		btnEmployee_8.setBounds(10, 180, 150, 16);
 		formToolkit.adapt(btnEmployee_8, true, true);
 		btnEmployee_8.setText("Employee_8");
 
 		Button btnEmployee_9 = new Button(grpStaff, SWT.CHECK);
+		btnEmployee_9.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				buttonValues[9] = btnEmployee_9.getSelection();
+//				System.out.println(buttonValues[9] + " Button 9");
+			}
+		});
 		btnEmployee_9.setBounds(10, 200, 150, 16);
 		formToolkit.adapt(btnEmployee_9, true, true);
 		btnEmployee_9.setText("Employee_9");
 
-		text = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text.setText("");
+		text = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text.selectAll();
+//			}
+//		});
 		text.setBounds(180, 20, 140, 18);
 
-		text1 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text1.setText("");
+		text1 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text1.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text1.selectAll();
+//			}
+//		});
 		text1.setBounds(180, 40, 140, 18);
 
-		text2 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text2.setText("");
+		text2 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text2.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text2.selectAll();
+//			}
+//		});
 		text2.setBounds(180, 60, 140, 18);
 
-		text3 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text3.setText("");
+		text3 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text3.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text3.selectAll();
+//			}
+//		});
 		text3.setBounds(180, 80, 140, 18);
 
 		text4 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text4.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text4.selectAll();
+//			}
+//		});
 		text4.setBounds(180, 100, 140, 18);
 
-		text5 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text5.setText("");
+		text5 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text5.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text5.selectAll();
+//			}
+//		});
 		text5.setBounds(180, 120, 140, 18);
 
-		text6 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text6.setText("");
+		text6 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text6.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text6.selectAll();
+//			}
+//		});
 		text6.setBounds(180, 140, 140, 18);
 
-		text7 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text7.setText("");
+		text7 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text7.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text7.selectAll();
+//			}
+//		});
 		text7.setBounds(180, 160, 140, 18);
 
-		text8 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text8.setText("");
+		text8 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text8.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text8.selectAll();
+//			}
+//		});
 		text8.setBounds(180, 180, 140, 18);
 
-		text9 = formToolkit.createText(grpStaff, "New Text", SWT.NONE);
-		text9.setText("");
+		text9 = formToolkit.createText(grpStaff, "", SWT.NONE);
+//		text9.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				text9.selectAll();
+//			}
+//		});
 		text9.setBounds(180, 200, 140, 18);
 
 		Label lblSelectNormalStaff = formToolkit.createLabel(grpStaff,
@@ -254,6 +375,26 @@ public class ReportEntry extends Shell {
 				}
 			}
 		});
+		
+				Group grpTakedowns = new Group(composite, SWT.NONE);
+				grpTakedowns.setBounds(10, 276, 330, 136);
+				grpTakedowns.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
+				grpTakedowns.setText("Takedowns");
+				formToolkit.adapt(grpTakedowns);
+				formToolkit.paintBordersFor(grpTakedowns);
+				
+						textTakedowns = formToolkit.createText(grpTakedowns, "", SWT.NONE | SWT.WRAP);
+//						textTakedowns.addMouseListener(new MouseAdapter() {
+//							@Override
+//							public void mouseDown(MouseEvent e) {
+//								textTakedowns.selectAll();
+//							}
+//						});
+						textTakedowns.setBounds(10, 22, 310, 75);
+						
+								Label lblTakedownEventsIn
+										= formToolkit.createLabel(grpTakedowns, "Takedown events in the next 48 hours.", SWT.NONE);
+								lblTakedownEventsIn.setBounds(10, 103, 253, 15);
 
 //		table.addSelectionListener(widgetSelectedAdapter(e -> {
 //			// Clean up any previous editor control
@@ -295,8 +436,13 @@ public class ReportEntry extends Shell {
 		formToolkit.adapt(grpRequestsFromOther);
 		formToolkit.paintBordersFor(grpRequestsFromOther);
 
-		textIdRequests = formToolkit.createText(grpRequestsFromOther, "New Text", SWT.NONE);
-		textIdRequests.setText("");
+		textIdRequests = formToolkit.createText(grpRequestsFromOther, "", SWT.WRAP);
+//		textIdRequests.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				textIdRequests.selectAll();
+//			}
+//		});
 		textIdRequests.setBounds(10, 22, 310, 75);
 
 		Label lblEnterAnyInterdepartmental = formToolkit.createLabel(grpRequestsFromOther,
@@ -312,8 +458,13 @@ public class ReportEntry extends Shell {
 		formToolkit.adapt(grpEquipmentredundancyIssues);
 		formToolkit.paintBordersFor(grpEquipmentredundancyIssues);
 
-		textEquipment = formToolkit.createText(grpEquipmentredundancyIssues, "New Text", SWT.NONE);
-		textEquipment.setText("");
+		textEquipment = formToolkit.createText(grpEquipmentredundancyIssues, "", SWT.WRAP);
+//		textEquipment.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				textEquipment.selectAll();
+//			}
+//		});
 		textEquipment.setBounds(10, 22, 310, 75);
 
 		Label lblEnterAnyOngoing = formToolkit.createLabel(grpEquipmentredundancyIssues,
@@ -329,8 +480,13 @@ public class ReportEntry extends Shell {
 		formToolkit.adapt(grpSpecialMonitoringRequests);
 		formToolkit.paintBordersFor(grpSpecialMonitoringRequests);
 
-		textMonitoring = formToolkit.createText(grpSpecialMonitoringRequests, "New Text", SWT.NONE);
-		textMonitoring.setText("");
+		textMonitoring = formToolkit.createText(grpSpecialMonitoringRequests, "", SWT.WRAP);
+//		textMonitoring.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				textMonitoring.selectAll();
+//			}
+//		});
 		textMonitoring.setBounds(10, 22, 310, 75);
 
 		Label lblEnterAnySpecial = formToolkit.createLabel(grpSpecialMonitoringRequests,
@@ -338,21 +494,6 @@ public class ReportEntry extends Shell {
 						+ "high-profile broadcasts or discrepancies, etc...)",
 				SWT.WRAP);
 		lblEnterAnySpecial.setBounds(10, 103, 310, 30);
-
-		Group grpTakedowns = new Group(composite, SWT.NONE);
-		grpTakedowns.setBounds(10, 276, 330, 136);
-		grpTakedowns.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
-		grpTakedowns.setText("Takedowns");
-		formToolkit.adapt(grpTakedowns);
-		formToolkit.paintBordersFor(grpTakedowns);
-
-		textTakedowns = formToolkit.createText(grpTakedowns, "New Text", SWT.NONE | SWT.WRAP);
-		textTakedowns.setText("");
-		textTakedowns.setBounds(10, 22, 310, 75);
-
-		Label lblTakedownEventsIn
-				= formToolkit.createLabel(grpTakedowns, "Takedown events in the next 48 hours.", SWT.NONE);
-		lblTakedownEventsIn.setBounds(10, 103, 253, 15);
 
 		Group group = new Group(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
 		group.setBackground(SWTResourceManager.getColor(255, 255, 255));
@@ -367,7 +508,7 @@ public class ReportEntry extends Shell {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy, HH:mm");
 		LocalDateTime now = LocalDateTime.now();
 		String time = dtf.format(now);
-		txtDate = formToolkit.createText(group, "New Text", SWT.NONE);
+		txtDate = formToolkit.createText(group, "New Text", SWT.READ_ONLY);
 		txtDate.setEditable(false);
 		txtDate.setFont(SWTResourceManager.getFont("Segoe UI", 9, SWT.NORMAL));
 		txtDate.setText(time + " MT");
@@ -381,7 +522,7 @@ public class ReportEntry extends Shell {
 		lblName.setBounds(10, 45, 40, 17);
 		lblName.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 
-		txtName = formToolkit.createText(group, "New Text", SWT.LEFT);
+		txtName = formToolkit.createText(group, "New Text", SWT.READ_ONLY);
 		txtName.setBounds(56, 45, 178, 20);
 		txtName.setEditable(false);
 		txtName.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.NORMAL));
@@ -400,7 +541,7 @@ public class ReportEntry extends Shell {
 		} else {
 			shift = "Mids";
 		}
-		txtShift = formToolkit.createText(group, "New Text", SWT.NONE);
+		txtShift = formToolkit.createText(group, "", SWT.READ_ONLY);
 		txtShift.setText(shift);
 		txtShift.setBounds(305, 18, 60, 21);
 
@@ -463,52 +604,115 @@ public class ReportEntry extends Shell {
 				= formToolkit.createLabel(grpDailyChecklist, "Ensure all prime-time MC switches are successful:", SWT.NONE);
 		lblMcSwitches.setBounds(10, 325, 300, 15);
 
+		
 		Button btnEaWaItxComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnEaWaItxComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				eaWaItxComplete = btnEaWaItxComplete.getSelection();
+			}
+		});
 		btnEaWaItxComplete.setBounds(338, 25, 93, 16);
 		formToolkit.adapt(btnEaWaItxComplete, true, true);
 		btnEaWaItxComplete.setText("Complete");
 
+
 		Button btnEaWaItxPlayoutComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnEaWaItxPlayoutComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				eaWaItxPlayoutComplete = btnEaWaItxPlayoutComplete.getSelection();
+			}
+		});
 		btnEaWaItxPlayoutComplete.setBounds(338, 45, 93, 16);
 		formToolkit.adapt(btnEaWaItxPlayoutComplete, true, true);
 		btnEaWaItxPlayoutComplete.setText("Complete");
 
+
 		Button btnChannelLaunchComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnChannelLaunchComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				channelLaunchComplete = btnChannelLaunchComplete.getSelection();
+			}
+		});
 		btnChannelLaunchComplete.setBounds(338, 65, 93, 16);
 		formToolkit.adapt(btnChannelLaunchComplete, true, true);
 		btnChannelLaunchComplete.setText("Complete");
 
 		Button btnWeatherComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnWeatherComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				weatherComplete = btnWeatherComplete.getSelection();
+			}
+		});
 		btnWeatherComplete.setBounds(338, 85, 93, 16);
 		formToolkit.adapt(btnWeatherComplete, true, true);
 		btnWeatherComplete.setText("Complete");
 
 		Button btnInteractiveComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnInteractiveComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				interactiveComplete = btnInteractiveComplete.getSelection();
+			}
+		});
 		btnInteractiveComplete.setBounds(338, 105, 93, 16);
 		formToolkit.adapt(btnInteractiveComplete, true, true);
 		btnInteractiveComplete.setText("Complete");
 
 		Button btnMaintenanceComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnMaintenanceComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				maintenanceComplete = btnMaintenanceComplete.getSelection();
+			}
+		});
 		btnMaintenanceComplete.setBounds(338, 165, 93, 16);
 		formToolkit.adapt(btnMaintenanceComplete, true, true);
 		btnMaintenanceComplete.setText("Complete");
 
 		Button btnTurnerComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnTurnerComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				turnerComplete = btnTurnerComplete.getSelection();
+			}
+		});
 		btnTurnerComplete.setBounds(338, 225, 93, 16);
 		formToolkit.adapt(btnTurnerComplete, true, true);
 		btnTurnerComplete.setText("Complete");
 
 		Button btnPreliminaryKciComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnPreliminaryKciComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				preliminaryKciComplete = btnPreliminaryKciComplete.getSelection();
+			}
+		});
 		btnPreliminaryKciComplete.setBounds(338, 245, 93, 16);
 		formToolkit.adapt(btnPreliminaryKciComplete, true, true);
 		btnPreliminaryKciComplete.setText("Complete");
 
 		Button btnSkdlComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnSkdlComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				skdlComplete = btnSkdlComplete.getSelection();
+			}
+		});
 		btnSkdlComplete.setBounds(338, 265, 93, 16);
 		formToolkit.adapt(btnSkdlComplete, true, true);
 		btnSkdlComplete.setText("Complete");
 
 		Button btnMcSwitchesComplete = new Button(grpDailyChecklist, SWT.CHECK);
+		btnMcSwitchesComplete.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				mcSwitchesComplete = btnMcSwitchesComplete.getSelection();
+			}
+		});
 		btnMcSwitchesComplete.setBounds(338, 325, 93, 16);
 		formToolkit.adapt(btnMcSwitchesComplete, true, true);
 		btnMcSwitchesComplete.setText("Complete");
@@ -518,7 +722,14 @@ public class ReportEntry extends Shell {
 		lblOncomingLead.setBounds(730, 481, 100, 20);
 
 		txtOncomingLead = formToolkit.createText(scrldfrmCheyenneTocLead.getBody(), "Oncoming Lead", SWT.NONE);
+		txtOncomingLead.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				txtOncomingLead.selectAll();
+			}
+		});
 		txtOncomingLead.setBounds(730, 507, 200, 20);
+		
 
 		Button btnPassdownAccepted = new Button(scrldfrmCheyenneTocLead.getBody(), SWT.CHECK);
 		btnPassdownAccepted.setBounds(940, 480, 127, 20);
@@ -577,6 +788,21 @@ public class ReportEntry extends Shell {
 	}
 
 	protected void saveAndClose() {
+		for(int i = 0; i < buttonValues.length; i++) {
+			System.out.println(buttonValues[i]);
+		}
+
+		System.out.println(eaWaItxComplete + " EA WA ITX");
+		System.out.println(eaWaItxPlayoutComplete + " EA WA ITX Playouts");
+		System.out.println(channelLaunchComplete + " Channel Launch");
+		System.out.println(weatherComplete + " Weather");
+		System.out.println(interactiveComplete + " Interactive"); 
+		System.out.println(maintenanceComplete + " Maintenance");
+		System.out.println(turnerComplete + " Turner");
+		System.out.println(preliminaryKciComplete + " Prelim KCI");
+		System.out.println(skdlComplete + " SKDL");
+		System.out.println(mcSwitchesComplete + " MC");
+
 		System.out.println(txtOncomingLead.getText());
 	}
 	@Override
