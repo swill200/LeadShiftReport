@@ -1,21 +1,25 @@
 package main;
 
+import java.time.LocalDate;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
-import forms.PreviousReports;
 import forms.ReportEntry;
 
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
 public class Main extends Shell {
-
+	protected static LocalDate date;
+	protected static String shift;
+	protected static Main shell;
 	/**
 	 * Launch the application.
 	 * 
@@ -24,7 +28,7 @@ public class Main extends Shell {
 	public static void main(String args[]) {
 		try {
 			Display display = Display.getDefault();
-			Main shell = new Main(display);
+			shell = new Main(display);
 			shell.open();
 			shell.layout();
 			while (!shell.isDisposed()) {
@@ -54,8 +58,19 @@ public class Main extends Shell {
 		btnNewReportEntry.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				setShellVisible(false);
 				ReportEntry newReport = new ReportEntry(display);
 				newReport.open();
+				newReport.addListener(SWT.Dispose, new Listener() {
+
+					@Override
+					public void handleEvent(Event arg0) {
+						// TODO Auto-generated method stub
+						setShellVisible(true);
+						Main.this.setActive();
+					}
+					
+				});
 			}
 		});
 		GridData gd_btnNewReportEntry = new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 1);
@@ -69,13 +84,42 @@ public class Main extends Shell {
 		gd_btnPreviousReports.widthHint = 175;
 		gd_btnPreviousReports.heightHint = 75;
 		btnPreviousReports.setLayoutData(gd_btnPreviousReports);
-		btnPreviousReports.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				PreviousReports newPrevious = new PreviousReports(display);
-				newPrevious.open();
+		btnPreviousReports.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event event) {
+				setShellVisible(false);
+				DateSelection dateSelection = new DateSelection(display);
+				dateSelection.open();
+				dateSelection.addListener(SWT.Dispose, new Listener() {
+
+					@Override
+					public void handleEvent(Event arg0) {
+						// TODO Auto-generated method stub
+						setShellVisible(true);
+						Main.this.setActive();
+					}
+					
+				});
+//				setShellVisible(false);
 			}
 		});
+
+//		btnPreviousReports.addListener(SWT.Activate, new Listener() {
+//			public void handleEvent(Event event) {
+//				PreviousReports previousReport = new PreviousReports(display, date, shift);
+//				previousReport.open();
+//			}
+//		});
+//		btnPreviousReports.addListener(SWT.Selection, new Listener() {
+//			@Override
+//			public void handleEvent(Event arg0) {
+//				DateSelection dateSelection = new DateSelection(display);
+//				dateSelection.open();
+
+//					PreviousReports newPrevious = new PreviousReports(display, date, shift);
+//					newPrevious.open();
+//				}
+
+//		});
 		btnPreviousReports.setText("Review Previous Shift Reports");
 		new Label(this, SWT.NONE);
 		createContents();
@@ -94,4 +138,22 @@ public class Main extends Shell {
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
 	}
+	
+	protected static void setDate(LocalDate date) {
+		Main.date = date;
+	}
+	
+	protected static LocalDate getDate() {
+		return date;
+	}
+
+	protected static String getShift() {
+		return shift;
+	}
+	
+	protected void setShellVisible(boolean bool) {
+		Main.shell.setVisible(bool);
+	}
+
+
 }

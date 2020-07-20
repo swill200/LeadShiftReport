@@ -2,14 +2,16 @@ package forms;
 
 import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.security.PublicKey;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+
+import javax.management.loading.PrivateClassLoader;
+
 import org.eclipse.swt.*;
 import org.eclipse.swt.custom.*;
 import org.eclipse.swt.events.*;
@@ -21,24 +23,27 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import main.Code;
 
 public class ReportEntry extends Shell {
+	private final String FILE_PATH = "src\\datastore\\passdown_datastore.pd";
+	private final String BACKUP_FILE_PATH = "src\\datastore\\passdown_datastore.bak";
 	private final FormToolkit formToolkit = new FormToolkit(Display.getDefault());
 	private Text text, text1, text2, text3, text4, text5, text6, text7, text8, text9;
 	private Text textTakedowns, textIdRequests, textEquipment, textMonitoring, txtName, txtDate, txtShift,
 			txtOncomingLead;
-
-	protected boolean eaWaItxComplete,	eaWaItxPlayoutComplete, channelLaunchComplete, weatherComplete,	interactiveComplete,
-	maintenanceComplete, turnerComplete, preliminaryKciComplete, skdlComplete, mcSwitchesComplete;
+	private Table table;
+	protected boolean eaWaItxComplete, eaWaItxPlayoutComplete, channelLaunchComplete, weatherComplete,
+			interactiveComplete, maintenanceComplete, turnerComplete, preliminaryKciComplete, skdlComplete,
+			mcSwitchesComplete, passdownAccepted, passdownDeclined;
 
 	protected String shift;
 	protected String[] empArray;
 	protected boolean[] buttonValues = new boolean[10];
-	
+
 	public ReportEntry(Display display) {
 		super(display, SWT.SHELL_TRIM);
 		addShellListener(new ShellAdapter() {
 			@Override
 			public void shellClosed(ShellEvent e) {
-				
+
 			}
 		});
 		GridLayout gridLayout = new GridLayout(1, false);
@@ -293,12 +298,12 @@ public class ReportEntry extends Shell {
 				"Ticket numbers and description of any ongoing outages and/or" + " maintenance.", SWT.NONE | SWT.WRAP);
 		lblTicketNumbersAnd.setBounds(10, 220, 310, 30);
 
-		Table table = new Table(grpOngoingOutagesAnd, SWT.MULTI | SWT.FULL_SELECTION | SWT.HIDE_SELECTION);
+		table = new Table(grpOngoingOutagesAnd, SWT.MULTI | SWT.FULL_SELECTION | SWT.HIDE_SELECTION);
 		table.setBounds(10, 22, 310, 192);
 //		formToolkit.paintBordersFor(table);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
-
+		
 		final GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
 		table.setLayoutData(gd);
 
@@ -311,11 +316,10 @@ public class ReportEntry extends Shell {
 		col2.setResizable(false);
 		col2.setText("ELVIS Ticket #");
 		Color gray = display.getSystemColor(SWT.COLOR_GRAY);
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i <= 10; i++) {
 			TableItem item = new TableItem(table, SWT.BORDER_SOLID);
 			if (i % 2 == 0) {
 				item.setBackground(gray);
-
 			}
 			item.setText(new String[] { "", "" });
 		}
@@ -375,26 +379,26 @@ public class ReportEntry extends Shell {
 				}
 			}
 		});
-		
-				Group grpTakedowns = new Group(composite, SWT.NONE);
-				grpTakedowns.setBounds(10, 276, 330, 136);
-				grpTakedowns.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
-				grpTakedowns.setText("Takedowns");
-				formToolkit.adapt(grpTakedowns);
-				formToolkit.paintBordersFor(grpTakedowns);
-				
-						textTakedowns = formToolkit.createText(grpTakedowns, "", SWT.NONE | SWT.WRAP);
+
+		Group grpTakedowns = new Group(composite, SWT.NONE);
+		grpTakedowns.setBounds(10, 276, 330, 136);
+		grpTakedowns.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
+		grpTakedowns.setText("Takedowns");
+		formToolkit.adapt(grpTakedowns);
+		formToolkit.paintBordersFor(grpTakedowns);
+
+		textTakedowns = formToolkit.createText(grpTakedowns, "", SWT.NONE | SWT.WRAP);
 //						textTakedowns.addMouseListener(new MouseAdapter() {
 //							@Override
 //							public void mouseDown(MouseEvent e) {
 //								textTakedowns.selectAll();
 //							}
 //						});
-						textTakedowns.setBounds(10, 22, 310, 75);
-						
-								Label lblTakedownEventsIn
-										= formToolkit.createLabel(grpTakedowns, "Takedown events in the next 48 hours.", SWT.NONE);
-								lblTakedownEventsIn.setBounds(10, 103, 253, 15);
+		textTakedowns.setBounds(10, 22, 310, 75);
+
+		Label lblTakedownEventsIn
+				= formToolkit.createLabel(grpTakedowns, "Takedown events in the next 48 hours.", SWT.NONE);
+		lblTakedownEventsIn.setBounds(10, 103, 253, 15);
 
 //		table.addSelectionListener(widgetSelectedAdapter(e -> {
 //			// Clean up any previous editor control
@@ -505,7 +509,7 @@ public class ReportEntry extends Shell {
 		lblDate.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		lblDate.setBounds(10, 22, 95, 17);
 
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy, HH:mm");
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("M/dd/yyyy, HH:mm");
 		LocalDateTime now = LocalDateTime.now();
 		String time = dtf.format(now);
 		txtDate = formToolkit.createText(group, "New Text", SWT.READ_ONLY);
@@ -604,7 +608,6 @@ public class ReportEntry extends Shell {
 				= formToolkit.createLabel(grpDailyChecklist, "Ensure all prime-time MC switches are successful:", SWT.NONE);
 		lblMcSwitches.setBounds(10, 325, 300, 15);
 
-		
 		Button btnEaWaItxComplete = new Button(grpDailyChecklist, SWT.CHECK);
 		btnEaWaItxComplete.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -616,7 +619,6 @@ public class ReportEntry extends Shell {
 		formToolkit.adapt(btnEaWaItxComplete, true, true);
 		btnEaWaItxComplete.setText("Complete");
 
-
 		Button btnEaWaItxPlayoutComplete = new Button(grpDailyChecklist, SWT.CHECK);
 		btnEaWaItxPlayoutComplete.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -627,7 +629,6 @@ public class ReportEntry extends Shell {
 		btnEaWaItxPlayoutComplete.setBounds(338, 45, 93, 16);
 		formToolkit.adapt(btnEaWaItxPlayoutComplete, true, true);
 		btnEaWaItxPlayoutComplete.setText("Complete");
-
 
 		Button btnChannelLaunchComplete = new Button(grpDailyChecklist, SWT.CHECK);
 		btnChannelLaunchComplete.addSelectionListener(new SelectionAdapter() {
@@ -729,7 +730,6 @@ public class ReportEntry extends Shell {
 			}
 		});
 		txtOncomingLead.setBounds(730, 507, 200, 20);
-		
 
 		Button btnPassdownAccepted = new Button(scrldfrmCheyenneTocLead.getBody(), SWT.CHECK);
 		btnPassdownAccepted.setBounds(940, 480, 127, 20);
@@ -741,6 +741,23 @@ public class ReportEntry extends Shell {
 		formToolkit.adapt(btnPassdownDeclined, true, true);
 		btnPassdownDeclined.setText("Passdown Declined");
 
+		btnPassdownAccepted.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				passdownAccepted = btnPassdownAccepted.getSelection();
+				btnPassdownDeclined.setSelection(false);
+				passdownDeclined = btnPassdownDeclined.getSelection();
+			}
+		});
+		btnPassdownDeclined.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				passdownDeclined = btnPassdownDeclined.getSelection();
+				btnPassdownAccepted.setSelection(false);
+				passdownAccepted = btnPassdownAccepted.getSelection();
+			}
+		});
+		
 		Label lblEnterTheName = formToolkit.createLabel(scrldfrmCheyenneTocLead.getBody(),
 				"Enter the name of the oncoming lead techs and select whether the "
 						+ "accept the passdown. Passdowns should be declined if the if the "
@@ -773,7 +790,14 @@ public class ReportEntry extends Shell {
 		btnSave.setForeground(SWTResourceManager.getColor(0, 0, 0));
 		btnSave.setBounds(1070, 502, 127, 25);
 		btnSave.setBackground(display.getSystemColor(SWT.COLOR_GRAY));
-		btnSave.addSelectionListener(widgetSelectedAdapter(e -> saveAndClose()));
+		btnSave.addSelectionListener(widgetSelectedAdapter(e -> {
+			try {
+				saveAndClose();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}));
 		new Label(this, SWT.NONE);
 		createContents();
 	}
@@ -787,24 +811,74 @@ public class ReportEntry extends Shell {
 
 	}
 
-	protected void saveAndClose() {
-		for(int i = 0; i < buttonValues.length; i++) {
-			System.out.println(buttonValues[i]);
+	protected void saveAndClose() throws IOException {
+		File oldBackup = new File(BACKUP_FILE_PATH);
+		oldBackup.delete();
+		Files.copy(new File(FILE_PATH).toPath(), new File(BACKUP_FILE_PATH).toPath());
+		File oldData = new File(FILE_PATH);
+		oldData.renameTo(new File(BACKUP_FILE_PATH));
+		
+		File data = new File("src\\datastore\\passdown_datastore.pd");
+		
+		DateTimeFormatter date = DateTimeFormatter.ofPattern("M/dd/yyyy");
+		LocalDateTime now;
+		StringBuilder sb = new StringBuilder();
+		if (shift == "Mids") {
+			now = LocalDateTime.now().plusDays(1);
+		} else {
+			now = LocalDateTime.now();
 		}
+		String formattedDate = date.format(now);
+//		System.out.println(formattedDate);
+		sb.append(formattedDate + ";--" + txtName.getText() + ";--" + txtShift.getText() + ";--");
+//		System.out.println(txtName.getText());
+//		System.out.println(txtShift.getText());
+		for (int i = 0; i < buttonValues.length; i++) {
+//			System.out.println(buttonValues[i]);
+			sb.append(buttonValues[i] + ";--");
+		}
+		sb.append(text.getText() + ";--" + text1.getText() + ";--" + text2.getText() + ";--" + text3.getText() + ";--"
+				+ text4.getText() + ";--" + text5.getText() + ";--" + text6.getText() + ";--" + text7.getText() + ";--"
+				+ text8.getText() + ";--" + text9.getText() + ";--");
+		TableItem item;
+//		System.out.println(table.getItem(0));
+		for(int i = 0; i <= 10; i++) {
+			item = table.getItem(i);
+//			System.out.println(item.getText(0) + ";--" + item.getText(1));
+			sb.append(item.getText(0) + ";--" + item.getText(1) + ";--");
+		}
+		sb.append(textTakedowns.getText() + ";--" + textIdRequests.getText() + ";--" + textEquipment.getText() + ";--"
+				+ textMonitoring.getText() + ";--"); 
+		sb.append(eaWaItxComplete + ";--" + eaWaItxPlayoutComplete + ";--" + channelLaunchComplete + ";--" + weatherComplete + ";--"
+				+ interactiveComplete + ";--" + maintenanceComplete + ";--" + turnerComplete + ";--" + preliminaryKciComplete + ";--"
+				+ skdlComplete + ";--" + mcSwitchesComplete + ";--");
+		sb.append(txtOncomingLead.getText() + ";--" + passdownAccepted + ";--" + passdownDeclined + "\n");
+//		System.out.println(text.getText() + " " + text1.getText() + " " + text2.getText() + " " + text3.getText() + " "
+//				+ text4.getText() + " " + text5.getText() + " " + text6.getText() + " " + text7.getText() + " "
+//				+ text8.getText() + " " + text9.getText());
+//		System.out.println(eaWaItxComplete + " EA WA ITX");
+//		System.out.println(eaWaItxPlayoutComplete + " EA WA ITX Playouts");
+//		System.out.println(channelLaunchComplete + " Channel Launch");
+//		System.out.println(weatherComplete + " Weather");
+//		System.out.println(interactiveComplete + " Interactive");
+//		System.out.println(maintenanceComplete + " Maintenance");
+//		System.out.println(turnerComplete + " Turner");
+//		System.out.println(preliminaryKciComplete + " Prelim KCI");
+//		System.out.println(skdlComplete + " SKDL");
+//		System.out.println(mcSwitchesComplete + " MC");
+//		System.out.println(textTakedowns.getText());
+//		System.out.println(textIdRequests.getText());
+//		System.out.println(textEquipment.getText());
+//		System.out.println(textMonitoring.getText());
+//		System.out.println(txtOncomingLead.getText());
+		FileWriter writer = new FileWriter(data, true);
+//		BufferedWriter buffWriter = new BufferedWriter(writer); // creates a buffering character output stream
+		writer.write(sb.toString());
+		writer.close();
+		this.close();
 
-		System.out.println(eaWaItxComplete + " EA WA ITX");
-		System.out.println(eaWaItxPlayoutComplete + " EA WA ITX Playouts");
-		System.out.println(channelLaunchComplete + " Channel Launch");
-		System.out.println(weatherComplete + " Weather");
-		System.out.println(interactiveComplete + " Interactive"); 
-		System.out.println(maintenanceComplete + " Maintenance");
-		System.out.println(turnerComplete + " Turner");
-		System.out.println(preliminaryKciComplete + " Prelim KCI");
-		System.out.println(skdlComplete + " SKDL");
-		System.out.println(mcSwitchesComplete + " MC");
-
-		System.out.println(txtOncomingLead.getText());
 	}
+
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components

@@ -56,7 +56,7 @@ public static String[] checkShift(String shift) throws IOException {
 		String[] empArray = new String[10];
 		int i = 0;
 		while ((line = br.readLine()) != null) {
-			System.out.println(i);
+//			System.out.println(i);
 			empArray[i] = line; // appends line to string buffer
 			i++;
 		}
@@ -64,7 +64,7 @@ public static String[] checkShift(String shift) throws IOException {
 			if (empArray[j] == null) {
 				empArray[j] = "None";
 			}
-			System.out.println(empArray[j]);
+//			System.out.println(empArray[j]);
 		}
 		reader.close(); // closes the stream and release the resources
 		return empArray;
