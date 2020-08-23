@@ -30,6 +30,18 @@ public class Main extends Shell {
 	 * @param args
 	 */
 	public static void main(String args[]) {
+//		try {
+//			// Set System L&F
+//			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//		} catch (UnsupportedLookAndFeelException e) {
+//			// handle exception
+//		} catch (ClassNotFoundException e) {
+//			// handle exception
+//		} catch (InstantiationException e) {
+//			// handle exception
+//		} catch (IllegalAccessException e) {
+//			// handle exception
+//		}
 		try {
 			Display display = Display.getDefault();
 			shell = new Main(display);
@@ -44,14 +56,16 @@ public class Main extends Shell {
 			e.printStackTrace();
 		}
 	}
-	
 
 	/**
 	 * Create the shell.
 	 * 
 	 * @param display
+	 * @throws IllegalAccessException
+	 * @throws InstantiationException
+	 * @throws ClassNotFoundException
 	 */
-	public Main(Display display) {
+	public Main(Display display) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		super(display, SWT.SHELL_TRIM);
 		GridLayout gridLayout = new GridLayout(1, true);
 		gridLayout.marginTop = 10;
@@ -79,6 +93,7 @@ public class Main extends Shell {
 					e1.printStackTrace();
 				}
 				if (!Code.getOk()) {
+					setShift(Code.getShiftText());
 					ReportEntry newReport = new ReportEntry(display);
 					newReport.open();
 					newReport.addListener(SWT.Dispose, new Listener() {
@@ -94,6 +109,7 @@ public class Main extends Shell {
 				} else {
 					ReportEntryFilled newReport;
 					try {
+						setShift(Code.getShiftText());
 						newReport = new ReportEntryFilled(display, getDate(), getShift());
 						newReport.open();
 						newReport.addListener(SWT.Dispose, new Listener() {
@@ -109,6 +125,9 @@ public class Main extends Shell {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					} catch (IllegalAccessException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}

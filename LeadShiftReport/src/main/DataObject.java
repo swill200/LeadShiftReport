@@ -3,6 +3,7 @@ package main;
 import java.awt.List;
 
 public class DataObject {
+
 	public String date;
 	public String time;
 	public String user;
@@ -14,12 +15,17 @@ public class DataObject {
 	public boolean eaWaItxComplete, eaWaItxPlayoutComplete, channelLaunchComplete, weatherComplete, interactiveComplete,
 			dailySweeps, maintenanceComplete, turnerComplete, kciComplete, skdlComplete, mcSwitchesComplete;
 	public String takedownText, idRequestText, equipmentText, specialMonitoringText;
-	public String oncomingLead;
+	public String oncomingLead, declinedReason;
 	public boolean acceptedChecked, declinedChecked;
 	public List employeeNames = new List();
 	public String editTime;
 	public boolean[] employees = new boolean[10];
 	public boolean[] systemChecks = new boolean[13];
+	public String mocValue;
+	public int mocIndex;
+	
+	public DataObject() {		
+	}
 	
 	public void setSystemChecks(int index, boolean value) {
 		systemChecks[index] = value;

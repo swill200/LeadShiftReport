@@ -4,12 +4,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.*;
-import java.nio.file.*;
-import java.time.*;
-import java.time.format.*;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
+import javax.swing.JOptionPane;
+
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -18,12 +22,10 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.ole.win32.OleClientSite;
-import org.eclipse.swt.ole.win32.OleFrame;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -47,12 +49,13 @@ public class ReportEntryFilled extends Shell {
 	private Text text, text1, text2, text3, text4, text5, text6, text7, text8, text9;
 	private Text textTakedowns, textIdRequests, textEquipment, textMonitoring, txtName, txtDate, txtShift,
 			txtOncomingLead;
+	private Combo combo;
+	private String declinedReasoning = "Not Applicable";
 	private static String time, shift;
 	private Button btnEmployee, btnEmployee_1, btnEmployee_2, btnEmployee_3, btnEmployee_4, btnEmployee_5, btnEmployee_6,
 			btnEmployee_7, btnEmployee_8, btnEmployee_9;
 	private boolean[] buttonValues = new boolean[10];
-	private boolean[] systemChecks = new boolean[13];
-	
+	private static boolean shellChanged;
 	private final String FILE_PATH = "src\\datastore\\passdown_datastore.pd";
 	private final String BACKUP_FILE_PATH = "src\\datastore\\passdown_datastore.bak";
 	private Table table;
@@ -60,11 +63,30 @@ public class ReportEntryFilled extends Shell {
 			dailySweeps, maintenanceComplete, turnerComplete, preliminaryKciComplete, skdlComplete, mcSwitchesComplete,
 			passdownAccepted, passdownDeclined;
 	private Label lblEditTime;
+	private String[] mocArray;
+	private static int mocIndex;
 	private static LocalDate date;
 
 	public ReportEntryFilled(Display display, LocalDate date, String shift)
-			throws IllegalArgumentException, IllegalAccessException {
+			throws IllegalArgumentException, IllegalAccessException, IOException {
 		super(display, SWT.SHELL_TRIM);
+
+		this.addListener(SWT.Close, new Listener() {
+			public void handleEvent(Event event) {
+				if (getShellChanged()) {
+					if (JOptionPane.showConfirmDialog(null,
+							"The report has been changed, are you sure you want to close without saving?", "Close Window?",
+							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+						setShellChanged(false);
+						event.doit = true;
+					}
+					else {
+						event.doit = false;
+					}
+
+				}
+			}
+		});
 
 		GridLayout gridLayout = new GridLayout(1, false);
 		gridLayout.marginBottom = 25;
@@ -72,25 +94,28 @@ public class ReportEntryFilled extends Shell {
 		gridLayout.marginTop = 25;
 		gridLayout.marginLeft = 30;
 		setLayout(gridLayout);
+		try {
+			mocArray = Code.getMocList();
+		}
+		catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		setDate(date);
 		// Set the shift check string from the DateSelection class
 		setShift(shift);
 
 		// Establish the date string
-		if (shift != "Mids") {
-			setTime((getDate().getMonthValue()) + "/" + getDate().getDayOfMonth() + "/" + getDate().getYear());
-		} else {
+		if (shift == "Mids" && LocalTime.now().isAfter(LocalTime.of(23, 00))) {
 			setTime((getDate().getMonthValue()) + "/" + (getDate().getDayOfMonth() + 1) + "/" + getDate().getYear());
+		}
+		else {
+			setTime((getDate().getMonthValue()) + "/" + getDate().getDayOfMonth() + "/" + getDate().getYear());
 		}
 		// Create a DataObject object, and try to set it's values using the passdown
 		// datastore
-		DataObject obj = new DataObject();
-		try {
-			obj = Code.getPassdownData(getTime(), getShift());
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		DataObject obj = Code.getPassdownData(getTime(), getShift());
+		mocIndex = obj.mocIndex;
 
 //		// Close this shell if the record doesn't exist
 //		if (obj.date == null) {
@@ -107,7 +132,7 @@ public class ReportEntryFilled extends Shell {
 		buttonValues[7] = obj.employee7;
 		buttonValues[8] = obj.employee8;
 		buttonValues[9] = obj.employee9;
-		
+
 		eaWaItxComplete = obj.eaWaItxComplete;
 		eaWaItxPlayoutComplete = obj.eaWaItxPlayoutComplete;
 		channelLaunchComplete = obj.channelLaunchComplete;
@@ -121,8 +146,6 @@ public class ReportEntryFilled extends Shell {
 		mcSwitchesComplete = obj.mcSwitchesComplete;
 		passdownAccepted = obj.acceptedChecked;
 		passdownDeclined = obj.declinedChecked;
-		
-		System.out.println(passdownAccepted + "   " + obj.acceptedChecked + "   " + passdownDeclined + "   " + obj.declinedChecked);
 
 		ScrolledForm scrldfrmCheyenneTocLead = formToolkit.createScrolledForm(this);
 		GridData gd_scrldfrmCheyenneTocLead = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
@@ -137,7 +160,7 @@ public class ReportEntryFilled extends Shell {
 		formToolkit.paintBordersFor(composite);
 
 		lblEditTime = new Label(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
-		lblEditTime.setBounds(974, 592, 120, 15);
+		lblEditTime.setBounds(1060, 592, 130, 15);
 		formToolkit.adapt(lblEditTime, true, true);
 		lblEditTime.setText(obj.editTime);
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/dd/yyyy, HH:mm:ss");
@@ -145,6 +168,7 @@ public class ReportEntryFilled extends Shell {
 		ModifyListener modListener = new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent arg0) {
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		};
@@ -169,6 +193,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[0] = btnEmployee.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -184,6 +209,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[1] = btnEmployee_1.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -199,6 +225,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[2] = btnEmployee_2.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -214,6 +241,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[3] = btnEmployee_3.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -229,6 +257,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[4] = btnEmployee_4.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -244,6 +273,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[5] = btnEmployee_5.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -259,6 +289,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[6] = btnEmployee_6.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -274,6 +305,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[7] = btnEmployee_7.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -289,6 +321,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[8] = btnEmployee_8.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -304,6 +337,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				buttonValues[9] = btnEmployee_9.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 //				System.out.println(buttonValues[0] + " Button 0");
 			}
@@ -370,7 +404,7 @@ public class ReportEntryFilled extends Shell {
 		text9.addModifyListener(modListener);
 
 		Label lblSelectNormalStaff = formToolkit.createLabel(grpStaff,
-				"Select normal staff for the shift and where they were assigned for the" + " shift.", SWT.WRAP);
+				"Select staff for the shift and where they were assigned for the shift.", SWT.WRAP);
 		lblSelectNormalStaff.setLocation(10, 222);
 		lblSelectNormalStaff.setSize(310, 30);
 
@@ -479,7 +513,7 @@ public class ReportEntryFilled extends Shell {
 		});
 
 		Group grpTakedowns = new Group(composite, SWT.NONE);
-		grpTakedowns.setBounds(10, 276, 330, 136);
+		grpTakedowns.setBounds(10, 276, 330, 138);
 		grpTakedowns.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpTakedowns.setText("Takedowns");
 		formToolkit.adapt(grpTakedowns);
@@ -494,7 +528,7 @@ public class ReportEntryFilled extends Shell {
 		Group grpRequestsFromOther = new Group(composite, SWT.NONE);
 		grpRequestsFromOther.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpRequestsFromOther.setText("Requests from other departments");
-		grpRequestsFromOther.setBounds(357, 276, 330, 136);
+		grpRequestsFromOther.setBounds(357, 276, 330, 138);
 		formToolkit.adapt(grpRequestsFromOther);
 		formToolkit.paintBordersFor(grpRequestsFromOther);
 
@@ -505,15 +539,14 @@ public class ReportEntryFilled extends Shell {
 		textIdRequests.addModifyListener(modListener);
 
 		Label lblEnterAnyInterdepartmental = formToolkit.createLabel(grpRequestsFromOther,
-				"Enter any interdepartmental requests that need to be handled on a"
-						+ " different shift. Routes, ELVIS updates, etc...",
+				"Any interdepartmental requests that need to be handled on a different shift (e.g. routes, ELVIS updates, etc...)",
 				SWT.NONE | SWT.WRAP);
 		lblEnterAnyInterdepartmental.setBounds(10, 103, 310, 30);
 
 		Group grpEquipmentredundancyIssues = new Group(composite, SWT.NONE);
 		grpEquipmentredundancyIssues.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpEquipmentredundancyIssues.setText("Equipment/Redundancy Issues");
-		grpEquipmentredundancyIssues.setBounds(10, 418, 330, 136);
+		grpEquipmentredundancyIssues.setBounds(10, 418, 330, 138);
 		formToolkit.adapt(grpEquipmentredundancyIssues);
 		formToolkit.paintBordersFor(grpEquipmentredundancyIssues);
 
@@ -524,15 +557,14 @@ public class ReportEntryFilled extends Shell {
 		textEquipment.addModifyListener(modListener);
 
 		Label lblEnterAnyOngoing = formToolkit.createLabel(grpEquipmentredundancyIssues,
-				"Enter any ongoing equipment or redundancy issues (e.g. ESPN backup down, OP-2 stand alone 1 not working, "
-						+ "etc...)",
+				"Ongoing equipment or redundancy issues (e.g. ESPN backup down, OP-2 SA 1 not working, wall issues, etc...)",
 				SWT.WRAP);
 		lblEnterAnyOngoing.setBounds(10, 103, 310, 30);
 
 		Group grpSpecialMonitoringRequests = new Group(composite, SWT.NONE);
 		grpSpecialMonitoringRequests.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpSpecialMonitoringRequests.setText("Special Monitoring Requests");
-		grpSpecialMonitoringRequests.setBounds(357, 418, 330, 136);
+		grpSpecialMonitoringRequests.setBounds(357, 418, 330, 138);
 		formToolkit.adapt(grpSpecialMonitoringRequests);
 		formToolkit.paintBordersFor(grpSpecialMonitoringRequests);
 
@@ -543,8 +575,7 @@ public class ReportEntryFilled extends Shell {
 		textMonitoring.addModifyListener(modListener);
 
 		Label lblEnterAnySpecial = formToolkit.createLabel(grpSpecialMonitoringRequests,
-				"Enter any special monitoring requests (e.g. Negative crawls, "
-						+ "high-profile broadcasts or discrepancies, etc...)",
+				"Any special monitoring requests (e.g. Negative crawls, high-profile broadcasts or discrepancies, etc...)",
 				SWT.WRAP);
 		lblEnterAnySpecial.setBounds(10, 103, 310, 30);
 
@@ -554,7 +585,7 @@ public class ReportEntryFilled extends Shell {
 
 		Group group = new Group(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
 		group.setBackground(SWTResourceManager.getColor(255, 255, 255));
-		group.setBounds(780, 10, 376, 82);
+		group.setBounds(780, 33, 376, 82);
 		formToolkit.adapt(group);
 		formToolkit.paintBordersFor(group);
 
@@ -590,7 +621,7 @@ public class ReportEntryFilled extends Shell {
 		Group grpDailyChecklist = new Group(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
 		grpDailyChecklist.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpDailyChecklist.setText("Daily Checklist");
-		grpDailyChecklist.setBounds(730, 98, 477, 370);
+		grpDailyChecklist.setBounds(730, 120, 460, 370);
 		formToolkit.adapt(grpDailyChecklist);
 		formToolkit.paintBordersFor(grpDailyChecklist);
 
@@ -656,6 +687,8 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				eaWaItxComplete = btnEaWaItxComplete.getSelection();
+				setShellChanged(true);
+				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
 		btnEaWaItxComplete.setBounds(338, 25, 93, 16);
@@ -670,6 +703,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				eaWaItxPlayoutComplete = btnEaWaItxPlayoutComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -685,6 +719,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				channelLaunchComplete = btnChannelLaunchComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -700,6 +735,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				weatherComplete = btnWeatherComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -715,6 +751,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				interactiveComplete = btnInteractiveComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -730,6 +767,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				dailySweeps = btnDailySweeps.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -745,6 +783,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				maintenanceComplete = btnMaintenanceComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -760,6 +799,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				turnerComplete = btnTurnerComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -775,6 +815,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				preliminaryKciComplete = btnPreliminaryKciComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -790,6 +831,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				skdlComplete = btnSkdlComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -805,6 +847,7 @@ public class ReportEntryFilled extends Shell {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				mcSwitchesComplete = btnMcSwitchesComplete.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -815,25 +858,25 @@ public class ReportEntryFilled extends Shell {
 
 		Label lblOncomingLead = formToolkit.createLabel(scrldfrmCheyenneTocLead.getBody(), "Oncoming Lead:", SWT.NONE);
 		lblOncomingLead.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
-		lblOncomingLead.setBounds(730, 481, 100, 20);
+		lblOncomingLead.setBounds(730, 495, 100, 20);
 
 		txtOncomingLead = formToolkit.createText(scrldfrmCheyenneTocLead.getBody(), "New Text", SWT.NONE);
 		txtOncomingLead.setText(obj.oncomingLead);
 		txtOncomingLead.setEditable(true);
-		txtOncomingLead.setBounds(730, 507, 200, 20);
+		txtOncomingLead.setBounds(730, 520, 200, 20);
 		txtOncomingLead.addModifyListener(modListener);
 
 		Button btnPassdownAccepted = new Button(scrldfrmCheyenneTocLead.getBody(), SWT.CHECK);
 		btnPassdownAccepted.setEnabled(true);
-		btnPassdownAccepted.setSelection(obj.acceptedChecked);
-		btnPassdownAccepted.setBounds(940, 480, 127, 20);
+//		btnPassdownAccepted.setSelection(passdownAccepted);
+		btnPassdownAccepted.setBounds(940, 497, 127, 20);
 		formToolkit.adapt(btnPassdownAccepted, true, true);
 		btnPassdownAccepted.setText("Passdown Accepted");
 
 		Button btnPassdownDeclined = new Button(scrldfrmCheyenneTocLead.getBody(), SWT.CHECK);
 		btnPassdownDeclined.setEnabled(true);
-		btnPassdownAccepted.setSelection(obj.declinedChecked);
-		btnPassdownDeclined.setBounds(940, 507, 127, 20);
+//		btnPassdownAccepted.setSelection(passdownDeclined);
+		btnPassdownDeclined.setBounds(940, 522, 127, 20);
 		formToolkit.adapt(btnPassdownDeclined, true, true);
 		btnPassdownDeclined.setText("Passdown Declined");
 
@@ -843,6 +886,7 @@ public class ReportEntryFilled extends Shell {
 				passdownAccepted = btnPassdownAccepted.getSelection();
 				btnPassdownDeclined.setSelection(false);
 				passdownDeclined = btnPassdownDeclined.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -852,6 +896,7 @@ public class ReportEntryFilled extends Shell {
 				passdownDeclined = btnPassdownDeclined.getSelection();
 				btnPassdownAccepted.setSelection(false);
 				passdownAccepted = btnPassdownAccepted.getSelection();
+				setShellChanged(true);
 				lblEditTime.setText(LocalDateTime.now().format(formatter));
 			}
 		});
@@ -861,22 +906,39 @@ public class ReportEntryFilled extends Shell {
 						+ "accept the passdown. Passdowns should be declined if the if the "
 						+ "information is unclear or incorrect.",
 				SWT.WRAP);
-		lblEnterTheName.setBounds(730, 533, 477, 30);
+		lblEnterTheName.setBounds(730, 544, 477, 30);
+
 		Button btnSave = formToolkit.createButton(scrldfrmCheyenneTocLead.getBody(), "Save and Close", SWT.PUSH);
 		btnSave.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-//				forms.HtmlEmailSender.sendEMail(obj);
-				try {
-					saveAndClose();
-				} catch (IOException | URISyntaxException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				if (btnPassdownAccepted.getSelection() || btnPassdownDeclined.getSelection()) {
+					if (btnPassdownDeclined.getSelection() == true) {
+						declinedReasoning = JOptionPane.showInputDialog(null, "Why was the passdown declined?",
+								"Passdown Declined Justification", 0);
+						if ((declinedReasoning == null || (declinedReasoning != null && ("".equals(declinedReasoning))))) {
+							JOptionPane.showMessageDialog(null, "A reason must be provided in order to decline the passdown");
+						}
+					}
+					else {
+						try {
+							saveAndClose();
+						}
+						catch (IOException | URISyntaxException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					}
+
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "You must accept the passdown or decline it.");
 				}
 			}
 		});
+
 		btnSave.setForeground(SWTResourceManager.getColor(0, 0, 0));
-		btnSave.setBounds(1070, 498, 120, 25);
+		btnSave.setBounds(1070, 507, 120, 25);
 		btnSave.setBackground(display.getSystemColor(SWT.COLOR_GRAY));
 //		btnSave.addSelectionListener(SelectionAdapter(e -> {
 //			try {
@@ -889,9 +951,33 @@ public class ReportEntryFilled extends Shell {
 //		}));
 
 		Label lblLastEdit = new Label(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
-		lblLastEdit.setBounds(909, 592, 55, 15);
+		lblLastEdit.setBounds(1005, 592, 55, 15);
 		formToolkit.adapt(lblLastEdit, true, true);
 		lblLastEdit.setText("Last edit:");
+
+		combo = new Combo(scrldfrmCheyenneTocLead.getBody(), SWT.READ_ONLY);
+		combo.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				mocIndex = combo.getSelectionIndex();
+				setShellChanged(true);
+				lblEditTime.setText(LocalDateTime.now().format(formatter));
+			}
+		});
+		combo.setBounds(823, 10, 333, 23);
+		combo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		formToolkit.adapt(combo);
+		formToolkit.paintBordersFor(combo);
+		for (int i = 0; i < mocArray.length; i++) {
+			if (!mocArray[i].contentEquals(" ")) {
+				combo.add(mocArray[i]);
+			}
+		}
+		combo.select(mocIndex);
+
+		Label lblMoc = formToolkit.createLabel(scrldfrmCheyenneTocLead.getBody(), "MOC:", SWT.NONE);
+		lblMoc.setFont(SWTResourceManager.getFont("Segoe UI", 11, SWT.BOLD));
+		lblMoc.setBounds(780, 10, 44, 23);
 
 		new Label(this, SWT.NONE);
 		createContents();
@@ -900,7 +986,7 @@ public class ReportEntryFilled extends Shell {
 	// Create contents of the shell
 	protected void createContents() {
 		setText("Report Viewer");
-		setSize(1300, 725);
+		setSize(1300, 775);
 
 	}
 
@@ -918,9 +1004,10 @@ public class ReportEntryFilled extends Shell {
 		DateTimeFormatter time = DateTimeFormatter.ofPattern("HH:mm");
 		LocalDateTime now;
 		StringBuilder sb = new StringBuilder();
-		if (shift == "Mids") {
+		if (shift == "Mids" && LocalTime.now().isAfter(LocalTime.of(23, 00))) {
 			now = LocalDateTime.now().plusDays(1);
-		} else {
+		}
+		else {
 			now = LocalDateTime.now();
 		}
 		String formattedDate = date.format(now);
@@ -929,9 +1016,10 @@ public class ReportEntryFilled extends Shell {
 
 		for (int i = 0; i < buttonValues.length; i++) {
 			sb.append(buttonValues[i] + ";--");
-			if(buttonValues[i] == true) {
+			if (buttonValues[i] == true) {
 				obj.setEmployees(i, true);
-			} else {
+			}
+			else {
 				obj.setEmployees(i, false);
 			}
 		}
@@ -957,34 +1045,34 @@ public class ReportEntryFilled extends Shell {
 				+ btnEmployee_6.getText() + ";--" + btnEmployee_7.getText() + ";--" + btnEmployee_8.getText() + ";--"
 				+ btnEmployee_9.getText());
 		sb.append(";--" + formattedTime + ";--" + lblEditTime.getText());
+		sb.append(";--" + declinedReasoning + ";--" + combo.getText());
+		sb.append(";--" + mocIndex + ";--");
 		sb.append("\n");
 
 		FileWriter writer = new FileWriter(data, true);
 
+		// Opens the passdown_datastore.pd file with read/write capabilities
 		RandomAccessFile f = new RandomAccessFile(data, "rw");
-		long length = f.length() - 1;
+		long length = f.length() - 1; // Gets the length of the passdown file
 		byte b;
-		do {
+		do { // searches backwards through the file looking for a new line character
 			length -= 1;
 			f.seek(length);
 			b = f.readByte();
 		} while (b != 10);
 
-		f.setLength(length + 1);
+		f.setLength(length + 1); // truncate the file at the new line character + 1
 		f.close();
 
+		setShellChanged(false);
+		// Write the string to the file
 		writer.write(sb.toString());
 		writer.close();
 		this.close();
-		
+
 		String line = sb.toString();
-		System.out.println(line);
 		String[] splitLine = line.split(";--");
-//		for(int i = 0; i < splitLine.length; i++) {
-//			System.out.println(splitLine[i]);
-//		}
 		obj = Code.setDataObject(obj, splitLine);
-//		System.out.println(obj);
 		forms.HtmlEmailSender.sendEMail(obj);
 	}
 
@@ -1037,16 +1125,12 @@ public class ReportEntryFilled extends Shell {
 		return ReportEntryFilled.shift;
 	}
 
-	public static void createMessage() {
-		try {
-	     Shell shell = new Shell(Display.getDefault());
-	     Composite displayArea = new Composite(shell, SWT.BORDER);
-	     displayArea.setLayout(new FillLayout());
-	     OleFrame oleFrame = new OleFrame(displayArea, SWT.NONE);
-	     OleClientSite clientSite = new OleClientSite(oleFrame, SWT.NONE, "Word.Document", new File("H:\\email.etm"));
-	} catch (SWTException error) {
-	     error.printStackTrace();
-	}
+	protected static void setShellChanged(boolean bool) {
+		shellChanged = bool;
 	}
 
+	protected boolean getShellChanged() {
+		// TODO Auto-generated method stub
+		return shellChanged;
+	}
 }

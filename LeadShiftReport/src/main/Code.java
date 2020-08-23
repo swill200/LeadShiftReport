@@ -13,7 +13,8 @@ import java.util.ArrayList;
 public class Code {
 	protected static boolean ok;
 	protected static String shift;
-
+	protected static DataObject obj = new DataObject();;
+	
 	public static void main(String args[]) {
 	}
 
@@ -94,10 +95,28 @@ public class Code {
 		return empArray;
 	};
 
+	public static String[] getMocList() throws IOException {
+		File mocFile = new File("src\\datastore\\moc_list");
+		FileReader reader = new FileReader(mocFile);
+		BufferedReader br = new BufferedReader(reader);
+		String line;
+		String[] mocStrings = new String[15];
+		for(int i = 0; i < mocStrings.length; i++) {
+			mocStrings[i] = " ";
+		}
+		int i = 0;
+		while ((line = br.readLine()) != null) {
+			mocStrings[i] = line;
+			i++;
+		}
+		br.close();
+		reader.close();
+		return mocStrings;
+	}
+	
 	// Primary method to retrieve and load data into the DataObject for display in
 	// the application window
 	public static DataObject getPassdownData(String time, String shift) throws IOException {
-		DataObject obj = new DataObject();
 		ArrayList<String> list = new ArrayList<>();
 		// Read all lines in the passdown_datastore
 		for (String line : Files.readAllLines(Paths.get("src\\datastore\\passdown_datastore.pd"),
@@ -108,13 +127,18 @@ public class Code {
 		String formattedDate = time;
 		// Search the lines read above for the specific date requested
 		for (String line : list) {
+//			System.out.println(formattedDate);
 			if (line.startsWith(formattedDate)) {
+//				System.out.println(formattedDate + " DATE");
 				String[] splitLine = line.split(";--");
 				setOk(true);
-
-				setDataObject(obj, splitLine);
+//				System.out.println(shift);
+//				System.out.println(obj.shift + " OBJ.SHIFT");
+				obj = setDataObject(obj, splitLine);
 				// After the date has been found, check for the matching shift requested
 				if (obj.shift.equals(shift)) {
+//					System.out.println(obj.shift + " = " + shift);
+					return obj;
 				}
 				// Create a new, empty DataObject and display a missing record error to
 				// the user if the shift cannot be found on that date
@@ -127,9 +151,9 @@ public class Code {
 		}
 		// Display a missing record error to the user if the date cannot be found in
 		// the data-store
-		if (!getOk()) {
+//		if (!getOk()) {
 //			JOptionPane.showMessageDialog(null, "Record not found");
-		}
+//		}
 		return obj;
 	}
 
@@ -225,6 +249,7 @@ public class Code {
 		obj.text7 = splitLine[20];
 		obj.text8 = splitLine[21];
 		obj.text9 = splitLine[22];
+		obj.tableData.removeAll();
 		for (int i = 23; i < 45; i++) {
 			obj.tableData.add(splitLine[i]);
 		}
@@ -246,6 +271,7 @@ public class Code {
 		obj.oncomingLead = splitLine[60];
 		obj.acceptedChecked = Boolean.parseBoolean(splitLine[61]);
 		obj.declinedChecked = Boolean.parseBoolean(splitLine[62]);
+		obj.employeeNames.removeAll();
 		for (int i = 63; i < 73; i++) {
 			obj.employeeNames.add(splitLine[i]);
 		}
@@ -254,6 +280,15 @@ public class Code {
 			obj.editTime = splitLine[74];
 		} else {
 			obj.editTime = "NULL";
+		}
+		if (splitLine.length > 75) {
+			obj.declinedReason = splitLine[75];
+		}
+		if (splitLine.length > 76) {
+			obj.mocValue = splitLine[76];
+		}
+		if (splitLine.length > 77) {
+			obj.mocIndex = Integer.parseInt(splitLine[77]);
 		}
 		return obj;
 	}
