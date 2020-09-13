@@ -10,6 +10,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
@@ -25,25 +26,29 @@ import org.eclipse.wb.swt.SWTResourceManager;
 
 import main.Code;
 import main.DataObject;
-import org.eclipse.swt.widgets.Combo;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 
 public class PreviousReports extends Shell {
 	private final FormToolkit formToolkit = new FormToolkit(Display.getDefault());
 	private Text text, text1, text2, text3, text4, text5, text6, text7, text8, text9;
 	private Text textTakedowns, textIdRequests, textEquipment, textMonitoring, txtName, txtDate, txtShift,
-			txtOncominglead;
-	private Combo combo;
+			txtOncominglead, txtCallins;
+	private Combo combo, combo_1;
 	private static String time, shift;
 	private Button btnEmployee, btnEmployee_1, btnEmployee_2, btnEmployee_3, btnEmployee_4, btnEmployee_5, btnEmployee_6,
 			btnEmployee_7, btnEmployee_8, btnEmployee_9;
 	private boolean[] buttonValues = new boolean[10];
 	private Text txtReasonPassdown;
 	private String[] mocArray;
-	private static int mocIndex;
-
+	private DataObject obj;
+	
 	public PreviousReports(Display display, LocalDate date, String shift)
 			throws IllegalArgumentException, IllegalAccessException, IOException {
 		super(display, SWT.SHELL_TRIM);
+		setLocation(200, 100);
 		GridLayout gridLayout = new GridLayout(1, false);
 		gridLayout.marginBottom = 25;
 		gridLayout.marginRight = 25;
@@ -64,40 +69,48 @@ public class PreviousReports extends Shell {
 
 		// Create a DataObject object, and try to set it's values using the passdown
 		// datastore
-		DataObject obj = new DataObject();
+		obj = new DataObject();
+		obj.date = null;
 		obj = Code.getPassdownData(getTime(), getShift());
-
+		setObj(obj);
+		
+		buttonValues[0] = obj.employee;
+		buttonValues[1] = obj.employee1;
+		buttonValues[2] = obj.employee2;
+		buttonValues[3] = obj.employee3;
+		buttonValues[4] = obj.employee4;
+		buttonValues[5] = obj.employee5;
+		buttonValues[6] = obj.employee6;
+		buttonValues[7] = obj.employee7;
+		buttonValues[8] = obj.employee8;
+		buttonValues[9] = obj.employee9;
+		
+		for (int i = 0; i < buttonValues.length; i++) {
+			if (buttonValues[i] == true) {
+				obj.setEmployees(i, true);
+			} else {
+				obj.setEmployees(i, false);
+			}
+		}
+		
 		// Close this shell if the record doesn't exist
 		if (obj.date == null) {
 			JOptionPane.showMessageDialog(null, "Record not found");
 			this.close();
 		}
-		mocIndex = obj.mocIndex;
-
+		
 		ScrolledForm scrldfrmCheyenneTocLead = formToolkit.createScrolledForm(this);
 		GridData gd_scrldfrmCheyenneTocLead = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
 		gd_scrldfrmCheyenneTocLead.widthHint = 1200;
-		gd_scrldfrmCheyenneTocLead.heightHint = 675;
+		gd_scrldfrmCheyenneTocLead.heightHint = 725;
 		scrldfrmCheyenneTocLead.setLayoutData(gd_scrldfrmCheyenneTocLead);
 		formToolkit.paintBordersFor(scrldfrmCheyenneTocLead);
 		scrldfrmCheyenneTocLead.setText("Cheyenne TOC Lead Tech Shift Report");
 		scrldfrmCheyenneTocLead.setBounds(0, 0, 697, 564);
 		Composite composite = formToolkit.createComposite(scrldfrmCheyenneTocLead.getBody(), SWT.BORDER);
-		composite.setBounds(10, 10, 697, 564);
+		composite.setBounds(10, 20, 697, 600);
 		formToolkit.paintBordersFor(composite);
 
-		combo = new Combo(scrldfrmCheyenneTocLead.getBody(), SWT.READ_ONLY);
-		combo.setBounds(823, 10, 333, 23);
-		combo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-		formToolkit.adapt(combo);
-		formToolkit.paintBordersFor(combo);
-		for (int i = 0; i < mocArray.length; i++) {
-			if (!mocArray[i].contentEquals(" ")) {
-				combo.add(mocArray[i]);
-			}
-		}
-		combo.select(mocIndex);
-		combo.setEnabled(false);
 
 		// Recreate the application window and set values based on the retrieved
 		// record
@@ -279,57 +292,57 @@ public class PreviousReports extends Shell {
 		Group grpRequestsFromOther = new Group(composite, SWT.NONE);
 		grpRequestsFromOther.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpRequestsFromOther.setText("Requests from other departments");
-		grpRequestsFromOther.setBounds(357, 276, 330, 138);
+		grpRequestsFromOther.setBounds(357, 276, 330, 158);
 		formToolkit.adapt(grpRequestsFromOther);
 		formToolkit.paintBordersFor(grpRequestsFromOther);
 
-		textIdRequests = formToolkit.createText(grpRequestsFromOther, "New Text", SWT.NONE);
+		textIdRequests = formToolkit.createText(grpRequestsFromOther, "New Text", SWT.WRAP);
 		textIdRequests.setText(obj.idRequestText);
-		textIdRequests.setBounds(10, 22, 310, 75);
+		textIdRequests.setBounds(10, 22, 310, 85);
 		textIdRequests.setEditable(false);
 
 		Label lblEnterAnyInterdepartmental = formToolkit.createLabel(grpRequestsFromOther,
 				"Any interdepartmental requests that need to be handled on a different shift (e.g. routes, ELVIS updates, etc...)",
 				SWT.NONE | SWT.WRAP);
-		lblEnterAnyInterdepartmental.setBounds(10, 103, 310, 30);
+		lblEnterAnyInterdepartmental.setBounds(10, 115, 310, 30);
 
 		Group grpEquipmentredundancyIssues = new Group(composite, SWT.NONE);
 		grpEquipmentredundancyIssues.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpEquipmentredundancyIssues.setText("Equipment/Redundancy Issues");
-		grpEquipmentredundancyIssues.setBounds(10, 418, 330, 138);
+		grpEquipmentredundancyIssues.setBounds(10, 440, 330, 158);
 		formToolkit.adapt(grpEquipmentredundancyIssues);
 		formToolkit.paintBordersFor(grpEquipmentredundancyIssues);
 
-		textEquipment = formToolkit.createText(grpEquipmentredundancyIssues, "New Text", SWT.NONE);
+		textEquipment = formToolkit.createText(grpEquipmentredundancyIssues, "New Text", SWT.WRAP);
 		textEquipment.setText(obj.equipmentText);
-		textEquipment.setBounds(10, 22, 310, 75);
+		textEquipment.setBounds(10, 22, 310, 85);
 		textEquipment.setEditable(false);
 
 		Label lblEnterAnyOngoing = formToolkit.createLabel(grpEquipmentredundancyIssues,
 				"Ongoing equipment or redundancy issues (e.g. ESPN backup down, OP-2 SA 1 not working, wall issues"
 						+ " etc...)",
 				SWT.WRAP);
-		lblEnterAnyOngoing.setBounds(10, 103, 320, 30);
+		lblEnterAnyOngoing.setBounds(10, 115, 310, 30);
 
 		Group grpSpecialMonitoringRequests = new Group(composite, SWT.NONE);
 		grpSpecialMonitoringRequests.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpSpecialMonitoringRequests.setText("Special Monitoring Requests");
-		grpSpecialMonitoringRequests.setBounds(357, 418, 330, 138);
+		grpSpecialMonitoringRequests.setBounds(357, 440, 330, 158);
 		formToolkit.adapt(grpSpecialMonitoringRequests);
 		formToolkit.paintBordersFor(grpSpecialMonitoringRequests);
 
-		textMonitoring = formToolkit.createText(grpSpecialMonitoringRequests, "New Text", SWT.NONE);
+		textMonitoring = formToolkit.createText(grpSpecialMonitoringRequests, "New Text", SWT.WRAP);
 		textMonitoring.setText(obj.specialMonitoringText);
-		textMonitoring.setBounds(10, 22, 310, 75);
+		textMonitoring.setBounds(10, 22, 310, 85);
 		textMonitoring.setEditable(false);
 
 		Label lblEnterAnySpecial = formToolkit.createLabel(grpSpecialMonitoringRequests,
 				"Any special monitoring requests (e.g. Negative crawls, high-profile broadcasts or discrepancies, etc...)",
 				SWT.WRAP);
-		lblEnterAnySpecial.setBounds(10, 103, 310, 30);
+		lblEnterAnySpecial.setBounds(10, 115, 310, 30);
 
 		Group grpTakedowns = new Group(composite, SWT.NONE);
-		grpTakedowns.setBounds(10, 276, 330, 138);
+		grpTakedowns.setBounds(10, 276, 330, 158);
 		grpTakedowns.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpTakedowns.setText("Takedowns");
 		formToolkit.adapt(grpTakedowns);
@@ -341,12 +354,12 @@ public class PreviousReports extends Shell {
 		textTakedowns.setEditable(false);
 
 		Label lblTakedownEventsIn =
-				formToolkit.createLabel(grpTakedowns, "Takedown events in the next 48 hours.", SWT.NONE);
-		lblTakedownEventsIn.setBounds(10, 103, 253, 15);
+				formToolkit.createLabel(grpTakedowns, "Takedown events in the next 48 hours, restore events, or upcoming channel launch proceedings. (e.g. takedowns, temp/permanent restores, files need ingested, etc...)", SWT.WRAP);
+		lblTakedownEventsIn.setBounds(10, 103, 310, 45);
 
 		Group group = new Group(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
 		group.setBackground(SWTResourceManager.getColor(255, 255, 255));
-		group.setBounds(780, 33, 376, 82);
+		group.setBounds(780, 65, 376, 82);
 		formToolkit.adapt(group);
 		formToolkit.paintBordersFor(group);
 
@@ -383,7 +396,7 @@ public class PreviousReports extends Shell {
 		Group grpDailyChecklist = new Group(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
 		grpDailyChecklist.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
 		grpDailyChecklist.setText("Daily Checklist");
-		grpDailyChecklist.setBounds(730, 120, 460, 370);
+		grpDailyChecklist.setBounds(730, 150, 460, 370);
 		formToolkit.adapt(grpDailyChecklist);
 		formToolkit.paintBordersFor(grpDailyChecklist);
 
@@ -410,13 +423,16 @@ public class PreviousReports extends Shell {
 		Label lblDailySweeps = formToolkit.createLabel(grpDailyChecklist, "Daily Lead Sweeps:", SWT.NONE);
 		lblDailySweeps.setBounds(10, 125, 300, 15);
 
+		Label lblMaintenanceSignOff = formToolkit.createLabel(grpDailyChecklist, "Maintenance tickets signed off:", SWT.NONE);
+		lblMaintenanceSignOff.setBounds(10, 145, 300, 15);
+
 		Label lblMidsOnly = formToolkit.createLabel(grpDailyChecklist, "Mids only:", SWT.NONE);
 		lblMidsOnly.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
-		lblMidsOnly.setBounds(10, 165, 70, 20);
+		lblMidsOnly.setBounds(10, 175, 70, 20);
 
 		Label lblMaintenanceRestored =
 				formToolkit.createLabel(grpDailyChecklist, "Verify restoration of scheduled maintenance:\t", SWT.NONE);
-		lblMaintenanceRestored.setBounds(10, 185, 300, 15);
+		lblMaintenanceRestored.setBounds(10, 195, 300, 15);
 
 		Label lblDaysOnly = formToolkit.createLabel(grpDailyChecklist, "Days only:", SWT.NONE);
 		lblDaysOnly.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
@@ -436,11 +452,11 @@ public class PreviousReports extends Shell {
 
 		Label lblSwingsOnly = formToolkit.createLabel(grpDailyChecklist, "Swings only:", SWT.NONE);
 		lblSwingsOnly.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
-		lblSwingsOnly.setBounds(10, 325, 80, 20);
+		lblSwingsOnly.setBounds(10, 315, 80, 20);
 
 		Label lblMcSwitches =
 				formToolkit.createLabel(grpDailyChecklist, "Ensure all prime-time MC switches are successful:", SWT.NONE);
-		lblMcSwitches.setBounds(10, 345, 300, 15);
+		lblMcSwitches.setBounds(10, 335, 300, 15);
 
 		Button btnEaWaItxComplete = new Button(grpDailyChecklist, SWT.CHECK);
 		btnEaWaItxComplete.setEnabled(false);
@@ -484,9 +500,16 @@ public class PreviousReports extends Shell {
 		btnDailySweeps.setText("Complete");
 		btnDailySweeps.setSelection(obj.dailySweeps);
 
+		Button btnMaintenanceSignOff = new Button(grpDailyChecklist, SWT.CHECK);
+		btnMaintenanceSignOff.setEnabled(false);
+		btnMaintenanceSignOff.setBounds(338, 145, 93, 16);
+		formToolkit.adapt(btnMaintenanceSignOff, true, true);
+		btnMaintenanceSignOff.setText("Complete");
+		btnMaintenanceSignOff.setSelection(obj.maintenanceSigned);
+		
 		Button btnMaintenanceComplete = new Button(grpDailyChecklist, SWT.CHECK);
 		btnMaintenanceComplete.setEnabled(false);
-		btnMaintenanceComplete.setBounds(338, 185, 93, 16);
+		btnMaintenanceComplete.setBounds(338, 195, 93, 16);
 		formToolkit.adapt(btnMaintenanceComplete, true, true);
 		btnMaintenanceComplete.setText("Complete");
 		btnMaintenanceComplete.setSelection(obj.maintenanceComplete);
@@ -514,30 +537,34 @@ public class PreviousReports extends Shell {
 
 		Button btnMcSwitchesComplete = new Button(grpDailyChecklist, SWT.CHECK);
 		btnMcSwitchesComplete.setEnabled(false);
-		btnMcSwitchesComplete.setBounds(338, 345, 93, 16);
+		btnMcSwitchesComplete.setBounds(338, 335, 93, 16);
 		formToolkit.adapt(btnMcSwitchesComplete, true, true);
 		btnMcSwitchesComplete.setText("Complete");
 		btnMcSwitchesComplete.setSelection(obj.mcSwitchesComplete);
 
 		Label lblOncomingLead = formToolkit.createLabel(scrldfrmCheyenneTocLead.getBody(), "Oncoming Lead:", SWT.NONE);
 		lblOncomingLead.setFont(SWTResourceManager.getFont("Segoe UI", 10, SWT.BOLD));
-		lblOncomingLead.setBounds(730, 495, 100, 20);
+		lblOncomingLead.setBounds(730, 537, 100, 20);
 
 		txtOncominglead = formToolkit.createText(scrldfrmCheyenneTocLead.getBody(), "New Text", SWT.NONE);
 		txtOncominglead.setText(obj.oncomingLead);
 		txtOncominglead.setEditable(false);
-		txtOncominglead.setBounds(730, 520, 200, 20);
+		txtOncominglead.setBounds(730, 562, 200, 20);
 
+		txtCallins = formToolkit.createText(scrldfrmCheyenneTocLead.getBody(), "", SWT.NONE);
+		txtCallins.setBounds(130, 630, 477, 21);
+		txtCallins.setText(obj.callins);
+		
 		Button btnPassdownAccepted = new Button(scrldfrmCheyenneTocLead.getBody(), SWT.CHECK);
 		btnPassdownAccepted.setEnabled(false);
-		btnPassdownAccepted.setBounds(940, 497, 127, 20);
+		btnPassdownAccepted.setBounds(940, 542, 127, 20);
 		formToolkit.adapt(btnPassdownAccepted, true, true);
 		btnPassdownAccepted.setText("Passdown Accepted");
 		btnPassdownAccepted.setSelection(obj.acceptedChecked);
 
 		Button btnPassdownDeclined = new Button(scrldfrmCheyenneTocLead.getBody(), SWT.CHECK);
 		btnPassdownDeclined.setEnabled(false);
-		btnPassdownDeclined.setBounds(940, 522, 150, 20);
+		btnPassdownDeclined.setBounds(940, 562, 150, 20);
 		formToolkit.adapt(btnPassdownDeclined, true, true);
 		btnPassdownDeclined.setText("Passdown Declined");
 		btnPassdownDeclined.setSelection(obj.declinedChecked);
@@ -547,20 +574,20 @@ public class PreviousReports extends Shell {
 						+ "accept the passdown. Passdowns should be declined if the if the "
 						+ "information is unclear or incorrect.",
 				SWT.WRAP);
-		lblEnterTheName.setBounds(730, 544, 477, 30);
+		lblEnterTheName.setBounds(730, 587, 477, 30);
 
 		Label lblLastEdit = new Label(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
-		lblLastEdit.setBounds(1005, 592, 55, 15);
+		lblLastEdit.setBounds(1005, 625, 55, 15);
 		formToolkit.adapt(lblLastEdit, true, true);
 		lblLastEdit.setText("Last edit:");
 
 		Label lblEditTime = new Label(scrldfrmCheyenneTocLead.getBody(), SWT.NONE);
-		lblEditTime.setBounds(1060, 592, 130, 15);
+		lblEditTime.setBounds(1060, 625, 130, 15);
 		formToolkit.adapt(lblEditTime, true, true);
 		lblEditTime.setText(obj.editTime);
 
 		Label lblReasonPassdown = new Label(scrldfrmCheyenneTocLead.getBody(), SWT.WRAP);
-		lblReasonPassdown.setBounds(10, 592, 100, 38);
+		lblReasonPassdown.setBounds(10, 665, 100, 38);
 		formToolkit.adapt(lblReasonPassdown, true, true);
 		lblReasonPassdown.setText("Reason passdown was declined:");
 		try {
@@ -569,33 +596,119 @@ public class PreviousReports extends Shell {
 			txtReasonPassdown.setText("Not applicable");
 		}
 
+		combo = new Combo(scrldfrmCheyenneTocLead.getBody(), SWT.READ_ONLY);
+		combo.setBounds(823, 10, 333, 23);
+		combo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		formToolkit.adapt(combo);
+		formToolkit.paintBordersFor(combo);
+		for (int i = 0; i < mocArray.length; i++) {
+			if (!mocArray[i].contentEquals(" ")) {
+				combo.add(mocArray[i]);
+			}
+		}
+		combo.select(obj.mocIndex);
+		combo.setEnabled(false);
+		
+		combo_1 = new Combo(scrldfrmCheyenneTocLead.getBody(), SWT.READ_ONLY);
+		combo_1.setBounds(823, 41, 167, 23);
+		combo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		formToolkit.adapt(combo_1);
+		formToolkit.paintBordersFor(combo_1);
+		combo_1.setEnabled(false);
+		combo_1.add("Cheyenne");
+		combo_1.add("Gilbert");
+		combo_1.select(obj.odsIndex);
+		
 		Label lblMoc = formToolkit.createLabel(scrldfrmCheyenneTocLead.getBody(), "MOC:", SWT.NONE);
 		lblMoc.setFont(SWTResourceManager.getFont("Segoe UI", 11, SWT.BOLD));
 		lblMoc.setBounds(780, 10, 44, 23);
-
-		txtReasonPassdown = formToolkit.createText(scrldfrmCheyenneTocLead.getBody(), "New Text", SWT.WRAP);
-		txtReasonPassdown.setEnabled(false);
+		
+		Label lblOds = formToolkit.createLabel(scrldfrmCheyenneTocLead.getBody(), "ODS:", SWT.NONE);
+		lblOds.setFont(SWTResourceManager.getFont("Segoe UI", 11, SWT.BOLD));
+		lblOds.setBounds(780, 40, 44, 23);
+		
+		Label lblCallins = formToolkit.createLabel(scrldfrmCheyenneTocLead.getBody(), "Call-Ins:", SWT.NONE);
+		lblCallins.setFont(SWTResourceManager.getFont("Segoe UI", 11, SWT.BOLD));
+		lblCallins.setBounds(65, 630, 62, 20);
+		
+		txtReasonPassdown = formToolkit.createText(scrldfrmCheyenneTocLead.getBody(), "New Text", SWT.WRAP | SWT.V_SCROLL);
 		txtReasonPassdown.setEditable(false);
-		txtReasonPassdown.setBounds(110, 592, 597, 30);
+		txtReasonPassdown.setBounds(110, 660, 597, 35);
 		txtReasonPassdown.setText(obj.declinedReason);
 
 		new Label(this, SWT.NONE);
+		
+		Menu menu = new Menu(this, SWT.BAR);
+		setMenuBar(menu);
+		
+		MenuItem mntmFile = new MenuItem(menu, SWT.CASCADE);
+		mntmFile.setText("File");
+		
+		Menu menu_1 = new Menu(mntmFile);
+		mntmFile.setMenu(menu_1);
+		
+		MenuItem mntmQuit = new MenuItem(menu_1, SWT.NONE);
+		mntmQuit.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				quit();
+			}
+		});
+		mntmQuit.setText("Quit");
+		
+		MenuItem mntmCloseApp = new MenuItem(menu_1, SWT.NONE);
+		mntmCloseApp.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				System.exit(0);
+			}
+		});
+		mntmCloseApp.setText("Close App");
+		
+		MenuItem mntmEmail = new MenuItem(menu, SWT.CASCADE);
+		mntmEmail.setText("Email");
+		
+		Menu menu_2 = new Menu(mntmEmail);
+		mntmEmail.setMenu(menu_2);
+		
+		MenuItem mntmCreateShiftReport = new MenuItem(menu_2, SWT.NONE);
+		mntmCreateShiftReport.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				sendEmail();
+			}
+		});
+		mntmCreateShiftReport.setText("Create Shift Report Email");
 		createContents();
 	}
 
 	// Create contents of the shell
 	protected void createContents() {
 		setText("Report Viewer");
-		setSize(1300, 800);
+		setSize(1300, 830);
 
 	}
 
+	protected void sendEmail() {
+		forms.HtmlEmailSender.sendEMail(getObj());
+	}
+	
 	@Override
 	public void close() {
 		// TODO Auto-generated method stub
 		super.close();
 	}
-
+	protected void setObj(DataObject obj) {
+		this.obj = obj;
+	}
+	
+	protected DataObject getObj() {
+		return this.obj;
+	}
+	protected void quit() {
+		this.close();
+	}
+	
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components

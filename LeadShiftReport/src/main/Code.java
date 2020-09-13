@@ -14,7 +14,7 @@ public class Code {
 	protected static boolean ok;
 	protected static String shift;
 	protected static DataObject obj = new DataObject();;
-	
+
 	public static void main(String args[]) {
 	}
 
@@ -47,10 +47,12 @@ public class Code {
 
 		if (timeComparison.equals(dayShift) || timeComparison.isAfter(dayShift) && timeComparison.isBefore(swingShift)) {
 			shift = "Days";
-		} else if (timeComparison.equals(swingShift)
+		}
+		else if (timeComparison.equals(swingShift)
 				|| timeComparison.isAfter(swingShift) && timeComparison.isBefore(midShift)) {
 			shift = "Swings";
-		} else {
+		}
+		else {
 			shift = "Mids";
 		}
 		return shift;
@@ -101,7 +103,7 @@ public class Code {
 		BufferedReader br = new BufferedReader(reader);
 		String line;
 		String[] mocStrings = new String[15];
-		for(int i = 0; i < mocStrings.length; i++) {
+		for (int i = 0; i < mocStrings.length; i++) {
 			mocStrings[i] = " ";
 		}
 		int i = 0;
@@ -113,10 +115,11 @@ public class Code {
 		reader.close();
 		return mocStrings;
 	}
-	
+
 	// Primary method to retrieve and load data into the DataObject for display in
 	// the application window
 	public static DataObject getPassdownData(String time, String shift) throws IOException {
+		obj.date = null;
 		ArrayList<String> list = new ArrayList<>();
 		// Read all lines in the passdown_datastore
 		for (String line : Files.readAllLines(Paths.get("src\\datastore\\passdown_datastore.pd"),
@@ -130,6 +133,7 @@ public class Code {
 //			System.out.println(formattedDate);
 			if (line.startsWith(formattedDate)) {
 //				System.out.println(formattedDate + " DATE");
+				line = line.replaceAll("[%]{4}", "\n");
 				String[] splitLine = line.split(";--");
 				setOk(true);
 //				System.out.println(shift);
@@ -222,7 +226,7 @@ public class Code {
 //			obj.editTime = "NULL";
 //		}
 //	}
-	
+
 	// Setter for DataObject values
 	// TODO: Find a better way to process all these values. Consider a getter?
 	public static DataObject setDataObject(DataObject obj, String[] splitLine) {
@@ -276,20 +280,28 @@ public class Code {
 			obj.employeeNames.add(splitLine[i]);
 		}
 		obj.time = splitLine[73];
-		if (splitLine.length > 74) {
-			obj.editTime = splitLine[74];
-		} else {
-			obj.editTime = "NULL";
-		}
-		if (splitLine.length > 75) {
-			obj.declinedReason = splitLine[75];
-		}
+		obj.editTime = splitLine[74];
+		obj.declinedReason = splitLine[75];
 		if (splitLine.length > 76) {
 			obj.mocValue = splitLine[76];
-		}
-		if (splitLine.length > 77) {
 			obj.mocIndex = Integer.parseInt(splitLine[77]);
+			if (splitLine.length > 78) {
+				obj.odsValue = splitLine[78];
+				obj.odsIndex = Integer.parseInt(splitLine[79]);
+				if (splitLine.length > 80) {
+					obj.callins = splitLine[80];
+					if (splitLine.length > 81) {
+						obj.maintenanceSigned = Boolean.parseBoolean(splitLine[81]);
+					}
+				}
+			}
+
+
 		}
+		else {
+			obj.editTime = "NULL";
+		}
+
 		return obj;
 	}
 }

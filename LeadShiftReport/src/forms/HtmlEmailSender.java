@@ -1,7 +1,7 @@
 package forms;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.ole.win32.OLE;
+//import org.eclipse.swt.ole.win32.OLE;
 import org.eclipse.swt.ole.win32.OleAutomation;
 import org.eclipse.swt.ole.win32.OleClientSite;
 import org.eclipse.swt.ole.win32.OleFrame;
@@ -27,24 +27,32 @@ public class HtmlEmailSender {
 		OleAutomation mail = invoke(outlook, "CreateItem", 0 /* Mail item */).getAutomation();
 
 		StringBuilder sb = new StringBuilder(
-				"<style>  body { font-family: Calibri, sans-serif } .Massive {color:red; font-size: 24px} "
+				"<style>  body { font-family: Calibri, sans-serif; mso-padding-bottom-alt: 0;} .Massive {color:red; font-size: 24px} "
 				+ ".normal {font-weight: normal;} h2 {color:black; font-size: 16px;} h3 {color:black; font-size: 14px;} "
-				+ "h4 {color:red; font-size: 14px;} p {color:black; font-size: 12px}</style><html><body><h1>"
+				+ "h4 {color:red; font-size: 16px;} p {color:black; font-size: 16px}</style><html><body><h1>"
 				+ "<span style=\"color: #0000ff;\">Cheyenne TOC Lead Tech Shift Report</span></h1>");
 		sb.append("<hr /><table><tbody><tr><td><strong>Date: </strong>" + obj.date + "</td>"
 				+ "<td width=\"35%\"><strong>Author: </strong>" + obj.user + "</td>"
 				+ "<td width=\"25%\"><strong>Shift: </strong>" + obj.shift + "</td>"
 				+ "<td width=\"15%\"><strong>Site:</strong> Cheyenne</td>" + "</tr></tbody></table>");
-		sb.append("<hr /><strong>MOC:  </strong>" + obj.mocValue);
+		sb.append("<hr /><strong>MOC:  </strong>" + obj.mocValue + "<br />");
+		sb.append("<strong>ODS:  </strong>" + obj.odsValue);
 		sb.append("<h2>Daily System Checks and Responsibilities: </h2>");
 		if (dailyChecksCompleted(obj)) {
 			sb.append("<p style=\"color:blue;font-size:25px;\"> All complete! </p>");
 		} else {
 			sb.append("<h4> <div class=\"Massive\">System checks incomplete! </div></h4>");
 		}
-
-		sb.append("<h2>Operators and Assignments: </h2>");
+		sb.append("<h2>Call Outs: </h2>");
+		if (obj.callins.equals("")) {
+			sb.append("<p class=\"normal\">None</p>");
+		} else {
+			sb.append("<h4>" + obj.callins + "</h4>");
+		}
+		sb.append("<h2>On Duty Staff: </h2>");
 		for (int i = 0; i < obj.employeeNames.getItemCount(); i++) {
+			System.out.println(obj.employeeNames.getItem(i));
+			System.out.println(obj.getEmployees(i));
 			if (obj.employeeNames.getItem(i) != "None" && obj.getEmployees(i)) {
 				sb.append(obj.employeeNames.getItem(i) + ", ");
 			}
@@ -61,40 +69,40 @@ public class HtmlEmailSender {
 			}
 		}
 		if (!checks) {
-			sb.append("None");
+			sb.append("<p class=\"normal\">None</p>");
 		}
 
 		sb.append("<h2>Takedowns: </h2>");
 //		System.out.println(obj.takedownText + " <--");
 		if (obj.takedownText.equals("")) {
-			sb.append("None");
+			sb.append("<p class=\"normal\">None</p>");
 		} else {
 			sb.append("<h4>" + obj.takedownText + "</h4>");
 		}
 
 		sb.append("<h2>Requests From Other Departments: </h2>");
 		if (obj.idRequestText.equals("")) {
-			sb.append("None");
+			sb.append("<p class=\"normal\">None</p>");
 		} else {
 			sb.append("<h4>" + obj.idRequestText + "</h4>");
 		}
 
 		sb.append("<h2>Equipment and/or Redundancy Issues: </h2>");
 		if (obj.equipmentText.equals("")) {
-			sb.append("None");
+			sb.append("<p class=\"normal\">None</p>");
 		} else {
 			sb.append("<h4>" + obj.equipmentText + "</h4>");
 		}
 
 		sb.append("<h2>Special Monitoring Requests: </h2>");
 		if (obj.specialMonitoringText.equals("")) {
-			sb.append("None");
+			sb.append("<p class=\"normal\">None</p>");
 		} else {
 			sb.append("<h4>" + obj.specialMonitoringText + "</h4>");
 		}
 
 		sb.append("<h2>Oncoming Shift Lead Tech: </h2>");
-		sb.append(obj.oncomingLead);
+		sb.append("<p class=\"normal\">" + obj.oncomingLead + "</p>");
 		if (obj.declinedChecked) {
 			sb.append("<h4 class=\"Massive\">Passdown was declined!</h4>");
 			sb.append("<h2>Reasoning:</h2> " + obj.declinedReason);
@@ -104,7 +112,7 @@ public class HtmlEmailSender {
 		setProperty(mail, "BodyFormat", 2 /* HTML */);
 		setProperty(mail, "Subject", ("Lead Tech Shift Report - " + obj.shift  + " " + obj.date));
 		setProperty(mail, "To", "Cheyenne-TOCTeamLeaders@dish.com");
-		setProperty(mail, "HtmlBody", sb.toString());
+		setProperty(mail, "HtmlBody", sb.toString().replaceAll("[\\n]", "<br />"));
 
 // To include attachments, currently unused
 //      if (null != attachmentPaths) {
@@ -124,25 +132,25 @@ public class HtmlEmailSender {
 	private static boolean dailyChecksCompleted(DataObject obj) {
 		if (!obj.eaWaItxComplete || !obj.eaWaItxPlayoutComplete || !obj.channelLaunchComplete || !obj.weatherComplete
 				|| !obj.interactiveComplete || !obj.dailySweeps || !obj.maintenanceComplete || !obj.turnerComplete
-				|| !obj.kciComplete || !obj.skdlComplete || !obj.mcSwitchesComplete) {
+				|| !obj.kciComplete || !obj.skdlComplete || !obj.mcSwitchesComplete || !obj.maintenanceSigned) {
 			return false;
 		}
 		return true;
 	}
 
-	private static OleAutomation getProperty(OleAutomation auto, String name) {
-		Variant varResult = auto.getProperty(property(auto, name));
-		if (varResult != null && varResult.getType() != OLE.VT_EMPTY) {
-			OleAutomation result = varResult.getAutomation();
-			varResult.dispose();
-			return result;
-		}
-		return null;
-	}
+//	private static OleAutomation getProperty(OleAutomation auto, String name) {
+//		Variant varResult = auto.getProperty(property(auto, name));
+//		if (varResult != null && varResult.getType() != OLE.VT_EMPTY) {
+//			OleAutomation result = varResult.getAutomation();
+//			varResult.dispose();
+//			return result;
+//		}
+//		return null;
+//	}
 
-	private static Variant invoke(OleAutomation auto, String command, String value) {
-		return auto.invoke(property(auto, command), new Variant[] { new Variant(value) });
-	}
+//	private static Variant invoke(OleAutomation auto, String command, String value) {
+//		return auto.invoke(property(auto, command), new Variant[] { new Variant(value) });
+//	}
 
 	private static Variant invoke(OleAutomation auto, String command) {
 		return auto.invoke(property(auto, command));

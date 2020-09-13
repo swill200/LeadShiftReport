@@ -13,16 +13,16 @@ public class DataObject {
 	public String text, text1, text2, text3, text4, text5, text6, text7, text8, text9;
 	public List tableData = new List();
 	public boolean eaWaItxComplete, eaWaItxPlayoutComplete, channelLaunchComplete, weatherComplete, interactiveComplete,
-			dailySweeps, maintenanceComplete, turnerComplete, kciComplete, skdlComplete, mcSwitchesComplete;
+			dailySweeps, maintenanceSigned, maintenanceComplete, turnerComplete, kciComplete, skdlComplete, mcSwitchesComplete;
 	public String takedownText, idRequestText, equipmentText, specialMonitoringText;
-	public String oncomingLead, declinedReason;
+	public String oncomingLead, declinedReason, callins;
 	public boolean acceptedChecked, declinedChecked;
 	public List employeeNames = new List();
 	public String editTime;
 	public boolean[] employees = new boolean[10];
 	public boolean[] systemChecks = new boolean[13];
-	public String mocValue;
-	public int mocIndex;
+	public String mocValue, odsValue;
+	public int mocIndex, odsIndex;
 	
 	public DataObject() {		
 	}

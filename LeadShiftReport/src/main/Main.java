@@ -1,5 +1,7 @@
 package main;
 
+import java.awt.Desktop;
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 
@@ -17,6 +19,8 @@ import org.eclipse.swt.widgets.Shell;
 
 import forms.ReportEntry;
 import forms.ReportEntryFilled;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 
 public class Main extends Shell {
 	private static LocalDate date;
@@ -30,22 +34,11 @@ public class Main extends Shell {
 	 * @param args
 	 */
 	public static void main(String args[]) {
-//		try {
-//			// Set System L&F
-//			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//		} catch (UnsupportedLookAndFeelException e) {
-//			// handle exception
-//		} catch (ClassNotFoundException e) {
-//			// handle exception
-//		} catch (InstantiationException e) {
-//			// handle exception
-//		} catch (IllegalAccessException e) {
-//			// handle exception
-//		}
 		try {
 			Display display = Display.getDefault();
 			shell = new Main(display);
 			shell.open();
+			shell.setLocation(300, 200);
 			shell.layout();
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
@@ -171,6 +164,91 @@ public class Main extends Shell {
 		});
 
 		new Label(this, SWT.NONE);
+		
+		Menu menu = new Menu(this, SWT.BAR);
+		setMenuBar(menu);
+		
+		MenuItem mntmFile = new MenuItem(menu, SWT.CASCADE);
+		mntmFile.setText("File");
+		
+		Menu menu_2 = new Menu(mntmFile);
+		mntmFile.setMenu(menu_2);
+		
+		MenuItem mntmQuit = new MenuItem(menu_2, SWT.NONE);
+		mntmQuit.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				quit();
+			}
+		});
+		mntmQuit.setText("Quit");
+		
+		MenuItem mntmConfig = new MenuItem(menu, SWT.CASCADE);
+		mntmConfig.setText("Config");
+		
+		Menu menu_1 = new Menu(mntmConfig);
+		mntmConfig.setMenu(menu_1);
+		
+		MenuItem mntmEditDays = new MenuItem(menu_1, SWT.NONE);
+		mntmEditDays.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ProcessBuilder pb = new ProcessBuilder("Notepad.exe", "src\\datastore\\shift_days_employees");
+				try {
+					pb.start();
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+			}
+		});
+		mntmEditDays.setText("Edit Days");
+		
+		MenuItem mntmEditSwings = new MenuItem(menu_1, SWT.NONE);
+		mntmEditSwings.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ProcessBuilder pb = new ProcessBuilder("Notepad.exe", "src\\datastore\\shift_swings_employees");
+				try {
+					pb.start();
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+			}
+		});
+		mntmEditSwings.setText("Edit Swings");
+		
+		MenuItem mntmEditMids = new MenuItem(menu_1, SWT.NONE);
+		mntmEditMids.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ProcessBuilder pb = new ProcessBuilder("Notepad.exe", "src\\datastore\\shift_mids_employees");
+				try {
+					pb.start();
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+			}
+		});
+		mntmEditMids.setText("Edit Mids");
+		
+		MenuItem mntmEditMoc = new MenuItem(menu_1, SWT.NONE);
+		mntmEditMoc.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ProcessBuilder pb = new ProcessBuilder("Notepad.exe", "src\\datastore\\moc_list");
+				try {
+					pb.start();
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					e2.printStackTrace();
+				}
+			}
+		});
+		mntmEditMoc.setText("Edit MOC");
+
 		createContents();
 	}
 
@@ -191,6 +269,10 @@ public class Main extends Shell {
 
 	}
 
+	protected void quit() {
+		this.close();
+	}
+	
 	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
@@ -215,5 +297,4 @@ public class Main extends Shell {
 	protected void setShellVisible(boolean bool) {
 		Main.shell.setVisible(bool);
 	}
-
 }

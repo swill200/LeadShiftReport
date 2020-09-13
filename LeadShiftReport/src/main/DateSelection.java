@@ -34,6 +34,7 @@ public class DateSelection extends Shell {
 			Display display = Display.getDefault();
 			shell = new DateSelection(display);
 			shell.open();
+			shell.setLocation(400, 400);
 			shell.layout();
 			while (!shell.isDisposed()) {
 				if (!display.readAndDispatch()) {
